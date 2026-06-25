@@ -1,6 +1,5 @@
-// components/api-client/hooks/useWorkspace.ts
 import { useState, useCallback } from 'react'
-import { INITIAL_TABS, INITIAL_COLLECTIONS, INITIAL_ENVIRONMENTS, generateId, buildFakeResponse } from '../mock-data'
+import { INITIAL_TABS, INITIAL_COLLECTIONS, INITIAL_ENVIRONMENTS, generateId } from '../mock-data'
 import type { RequestTab, Collection, HistoryEntry, ApiResponse, SidebarSection, Environment } from '../types'
 
 export function useWorkspace() {
@@ -28,26 +27,43 @@ export function useWorkspace() {
         setLogs((prev) => [...prev, { id: generateId(), level, message, timestamp: new Date(), details }])
     }
 
+    // 🚀 READY FOR REAL API 🚀
     const handleSend = async () => {
         if (!activeTab?.url) return
-        const url = activeTab.url.startsWith('http') ? activeTab.url : `https://${activeTab.url}`
+
         setLoadingTabs((s) => new Set(s).add(activeTabId))
-        addLog('info', `→ ${activeTab.method} ${url}`)
+        const startTime = Date.now()
+        addLog('info', `→ ${activeTab.method} ${activeTab.url}`)
 
-        await new Promise((r) => setTimeout(r, 800 + Math.random() * 600))
-        const response = buildFakeResponse(activeTab.method, url)
+        try {
+            // 1. REPLACE THIS TIMEOUT WITH YOUR REAL FETCH CALL:
+            // const res = await fetch(activeTab.url, { method: activeTab.method, body: activeTab.body })
+            await new Promise((resolve) => setTimeout(resolve, 600))
 
-        setResponses((prev) => ({ ...prev, [activeTabId]: response }))
-        setLoadingTabs((s) => { const n = new Set(s); n.delete(activeTabId); return n })
-        addLog(response.status < 400 ? 'log' : 'error', `← ${response.status} ${response.statusText}  ${response.time}ms`, response.body)
-        setHistory((prev) => [{ id: generateId(), method: activeTab.method, url: activeTab.url, status: response.status, time: response.time, timestamp: new Date() }, ...prev.slice(0, 49)])
+            const response: ApiResponse = {
+                status: 200,
+                statusText: 'OK',
+                time: Date.now() - startTime,
+                size: '1.2KB',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify({ message: "Ready for real backend integration!" }, null, 2),
+            }
+
+            setResponses((prev) => ({ ...prev, [activeTabId]: response }))
+            setHistory((prev) => [{ id: generateId(), method: activeTab.method, url: activeTab.url, status: response.status, time: response.time, timestamp: new Date() }, ...prev.slice(0, 49)])
+            addLog('log', `← ${response.status} ${response.statusText}`)
+
+        } catch (error) {
+            addLog('error', `Request Failed: ${error}`)
+        } finally {
+            setLoadingTabs((s) => { const n = new Set(s); n.delete(activeTabId); return n })
+        }
     }
 
     const handleNewTab = () => {
         const newTab: RequestTab = {
-            id: generateId(), name: '', method: 'GET', url: '',
-            headers: [{ id: generateId(), key: 'Content-Type', value: 'application/json', enabled: true }],
-            params: [], body: '', bodyType: 'none', activeTab: 'params',
+            id: generateId(), name: 'New Request', method: 'GET', url: '',
+            headers: [], params: [], body: '', bodyType: 'none', activeTab: 'params',
         }
         setTabs((prev) => [...prev, newTab])
         setActiveTabId(newTab.id)
@@ -61,19 +77,11 @@ export function useWorkspace() {
     }
 
     const handleSelectRequest = (collectionId: string, requestId: string) => {
-        const col = collections.find((c) => c.id === collectionId)
-        const req = col?.requests.find((r) => r.id === requestId)
+        const req = collections.find((c) => c.id === collectionId)?.requests.find((r) => r.id === requestId)
         if (!req) return
-
-        const existingTab = tabs.find((t) => t.method === req.method && t.url === req.url)
-        if (existingTab) {
-            setActiveTabId(existingTab.id)
-        } else {
-            const newTab: RequestTab = { ...req, id: generateId(), headers: [], params: [], body: '', bodyType: 'none', activeTab: 'params' }
-            setTabs((prev) => [...prev, newTab])
-            setActiveTabId(newTab.id)
-        }
-        if (sidebarSection === 'flows' || sidebarSection === 'specs') setSidebarSection('collections')
+        const newTab: RequestTab = { ...req, id: generateId(), headers: [], params: [], body: '', bodyType: 'none', activeTab: 'params' }
+        setTabs((prev) => [...prev, newTab])
+        setActiveTabId(newTab.id)
     }
 
     return {
