@@ -111,7 +111,9 @@ export function ResponsePanel({ response, isLoading }: ResponsePanelProps) {
 
   const copyBody = () => {
     if (response) {
-      navigator.clipboard.writeText(response.body)
+        if (response.body != null) {
+            navigator.clipboard.writeText(response.body).then( )
+        }
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     }
@@ -119,7 +121,7 @@ export function ResponsePanel({ response, isLoading }: ResponsePanelProps) {
 
   const TABS: ResponseTab[] = ['body', 'headers', 'cookies', 'timeline']
 
-  return (
+    return (
     <div className="flex flex-col h-full min-h-0 border-t border-border">
       {/* Response header */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-[oklch(0.12_0_0)]">
@@ -234,7 +236,7 @@ export function ResponsePanel({ response, isLoading }: ResponsePanelProps) {
                   { label: 'Content Download', time: '8ms', color: 'bg-[oklch(0.65_0.22_25)]' },
                 ].map((step, i) => (
                   <div key={i} className="flex items-center gap-4">
-                    <div className="w-32 text-xs text-muted-foreground text-right flex-shrink-0">{step.label}</div>
+                    <div className="w-32 text-xs text-muted-foreground text-right shrink-0">{step.label}</div>
                     <div className="flex-1 flex items-center gap-2">
                       <div className={cn('h-2 rounded-full transition-all', step.color)} style={{ width: `${Math.max(20, parseInt(step.time) / 2)}%` }} />
                       <span className="text-xs font-mono text-foreground">{step.time}</span>

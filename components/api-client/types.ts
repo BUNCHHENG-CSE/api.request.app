@@ -186,3 +186,11 @@ export interface SyncEvent {
 }
 
 export type SidebarSection = 'collections' | 'environments' | 'history' | 'flows' | 'specs' | 'projects'
+
+export interface Response {
+  headers: string;
+  body: string;
+  status: number;
+  time: number ;
+  size: number ;
+}

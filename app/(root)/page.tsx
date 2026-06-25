@@ -1,12 +1,11 @@
-import Banner from "../../components/features/main/banner";
-import CategoriesSection from "@/components/features/main/categories-section";
+import {ApiClient} from "@/components/api-client/ApiClient";
+
 
 const Page = () => {
 
     return (
         <>
-            <Banner/>
-            <CategoriesSection/>
+            <ApiClient />
         </>
     );
 };

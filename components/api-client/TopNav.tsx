@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Search, Bell, Settings, ChevronDown, Zap, User, LogOut, Gauge, Moon, Sun } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useTheme } from '@/components/theme-provider'
+import {ThemeToggle} from "@/components/web/theme-toggle";
 import { MembersBar } from './MembersBar'
 import type { Project, ProjectMember } from './types'
 
@@ -26,7 +26,7 @@ export function TopNav({
   activeProject,
   onOpenProjects,
 }: TopNavProps) {
-  const { theme, toggleTheme } = useTheme()
+
   const [envOpen, setEnvOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [searchFocused, setSearchFocused] = useState(false)
@@ -135,13 +135,7 @@ export function TopNav({
         </button>
 
         {/* Theme Toggle */}
-        <button
-          onClick={toggleTheme}
-          title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-          className="flex items-center justify-center size-9 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-all duration-200"
-        >
-          {theme === 'dark' ? <Sun className="size-4.5" /> : <Moon className="size-4.5" />}
-        </button>
+        <ThemeToggle/>
 
         {/* Settings */}
         <button
