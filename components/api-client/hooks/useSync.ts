@@ -24,22 +24,33 @@ const AVATAR_COLORS = [
 
 const MEMBER_NAMES = ['Alex', 'Sam', 'Jordan', 'Casey', 'Riley', 'Morgan', 'Taylor', 'Drew']
 
-function getOrCreateSelf(): ProjectMember {
+function getOrCreateSelf() {
+  // 1. Guard against Server-Side Rendering (SSR)
+  if (typeof window === 'undefined') {
+    // Return a temporary dummy user for the server render
+    return {
+      id: 'server-fallback',
+      name: 'Guest',
+      color: 'bg-muted' // or whatever your default Avatar colors look like
+    }
+  }
+
+  // 2. Safe to use browser APIs now
   const stored = sessionStorage.getItem('flowapi_self')
+
   if (stored) return JSON.parse(stored)
+
   const nameIdx = Math.floor(Math.random() * MEMBER_NAMES.length)
   const colorIdx = Math.floor(Math.random() * AVATAR_COLORS.length)
-  const self: ProjectMember = {
-    id: generateId(),
+
+  const newSelf = {
+    id: `user-${Math.random().toString(36).substring(2, 9)}`,
     name: MEMBER_NAMES[nameIdx],
-    avatar: MEMBER_NAMES[nameIdx].slice(0, 2).toUpperCase(),
-    color: AVATAR_COLORS[colorIdx],
-    online: true,
-    lastSeen: new Date().toISOString(),
-    projectId: '',
+    color: AVATAR_COLORS[colorIdx]
   }
-  sessionStorage.setItem('flowapi_self', JSON.stringify(self))
-  return self
+
+  sessionStorage.setItem('flowapi_self', JSON.stringify(newSelf))
+  return newSelf
 }
 
 // ─── Storage helpers ──────────────────────────────────────────────────────────

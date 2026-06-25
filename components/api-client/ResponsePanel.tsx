@@ -3,13 +3,13 @@
 import { useState } from 'react'
 import { Copy, Check, Download, Clock, Database, Zap } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { Response } from './types'
+import type {ApiResponse} from './types'
 
 type ResponseTab = 'body' | 'headers' | 'cookies' | 'timeline'
 
 interface ResponsePanelProps {
-  response: Response | null
-  isLoading: boolean
+    response: ApiResponse | null
+    isLoading: boolean
 }
 
 function StatusBadge({ status }: { status: number }) {
