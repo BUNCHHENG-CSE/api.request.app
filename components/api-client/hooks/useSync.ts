@@ -21,9 +21,9 @@ function getOrCreateSelf(): ProjectMember {
 export function useSync() {
   const [self] = useState<ProjectMember>(() => getOrCreateSelf())
   const [projects, setProjects] = useState<Project[]>([])
-  const [members] = useState<ProjectMember[]>([]) // Add members when backend is ready
+  const [members] = useState<ProjectMember[]>([])
   const [flows, setFlows] = useState<Flow[]>([])
-  const [specs, setSpecs] = useState<Spec[]>([])
+  const [specs] = useState<Spec[]>([])
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null)
 
   const createProject = useCallback((name: string, description: string): Project => {

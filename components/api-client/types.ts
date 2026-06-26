@@ -1,24 +1,27 @@
+// ─── HTTP ─────────────────────────────────────────────────────────────────────
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 'OPTIONS'
 
-export interface Header {
+// ─── Shared row model ─────────────────────────────────────────────────────────
+export interface KeyValueRow {
   id: string
   key: string
   value: string
   enabled: boolean
+  description?: string
 }
 
-export interface QueryParam {
-  id: string
-  key: string
-  value: string
-  enabled: boolean
-}
+/** @deprecated use KeyValueRow */
+export type Header = KeyValueRow
+/** @deprecated use KeyValueRow */
+export type QueryParam = KeyValueRow
 
+// ─── Environment ──────────────────────────────────────────────────────────────
 export interface EnvironmentVariable {
   id: string
   key: string
   value: string
   enabled: boolean
+  secret?: boolean
 }
 
 export interface Environment {
@@ -28,18 +31,96 @@ export interface Environment {
   color: string
 }
 
+// ─── Auth ─────────────────────────────────────────────────────────────────────
+export type AuthType = 'none' | 'bearer' | 'basic' | 'api-key' | 'oauth2'
+
+export interface Auth {
+  type: AuthType
+  token?: string
+  username?: string
+  password?: string
+  apiKey?: string
+  apiKeyIn?: 'header' | 'query'
+  apiKeyName?: string
+}
+
+// ─── Body ─────────────────────────────────────────────────────────────────────
+export type BodyType =
+  | 'none'
+  | 'json'
+  | 'form-data'
+  | 'x-www-form-urlencoded'
+  | 'raw'
+  | 'binary'
+  | 'graphql'
+  | 'text'
+  | 'xml'
+
+export interface FormDataRow extends KeyValueRow {
+  type: 'text' | 'file'
+  fileName?: string
+}
+
+// ─── Scripts ──────────────────────────────────────────────────────────────────
+export interface Scripts {
+  preRequest: string
+  postResponse: string
+}
+
+// ─── Request settings ─────────────────────────────────────────────────────────
+export interface RequestSettings {
+  httpVersion: 'auto' | '1.0' | '1.1' | '2'
+  sslVerification: boolean
+  followRedirects: boolean
+  followOriginalMethod: boolean
+  followAuthHeader: boolean
+  removeRefererOnRedirect: boolean
+  strictHttpParser: boolean
+  encodeUrlAutomatically: boolean
+  disableCookieJar: boolean
+  useServerCipherSuite: boolean
+  maxRedirects: number
+  disabledTlsProtocols: string
+  cipherSuiteSelection: string
+}
+
+export const DEFAULT_REQUEST_SETTINGS: RequestSettings = {
+  httpVersion: 'auto',
+  sslVerification: false,
+  followRedirects: true,
+  followOriginalMethod: false,
+  followAuthHeader: false,
+  removeRefererOnRedirect: false,
+  strictHttpParser: false,
+  encodeUrlAutomatically: true,
+  disableCookieJar: false,
+  useServerCipherSuite: false,
+  maxRedirects: 10,
+  disabledTlsProtocols: '',
+  cipherSuiteSelection: '',
+}
+
+// ─── RequestTab ───────────────────────────────────────────────────────────────
 export interface RequestTab {
   id: string
   name: string
   method: HttpMethod
   url: string
-  headers: Header[]
-  params: QueryParam[]
+  headers: KeyValueRow[]
+  params: KeyValueRow[]
   body: string
-  bodyType: "none" | "json" | "form" | "form-data" | "x-www-form-urlencoded" | "raw" | "binary" | "text" | "xml";
+  bodyType: BodyType
+  formDataRows?: FormDataRow[]
+  formEncodedRows?: KeyValueRow[]
+  graphqlQuery?: string
+  graphqlVariables?: string
+  auth: Auth
+  scripts: Scripts
+  settings: RequestSettings
   activeTab: 'params' | 'headers' | 'auth' | 'body' | 'scripts' | 'settings'
 }
 
+// ─── ApiResponse ──────────────────────────────────────────────────────────────
 export interface ApiResponse {
   status: number
   statusText: string
@@ -49,6 +130,7 @@ export interface ApiResponse {
   body: string
 }
 
+// ─── Collection ───────────────────────────────────────────────────────────────
 export interface Collection {
   id: string
   name: string
@@ -63,10 +145,11 @@ export interface CollectionRequest {
   method: HttpMethod
   url: string
   body?: string
-  headers?: Header[]
+  headers?: KeyValueRow[]
   description?: string
 }
 
+// ─── History ──────────────────────────────────────────────────────────────────
 export interface HistoryEntry {
   id: string
   method: HttpMethod
@@ -76,8 +159,7 @@ export interface HistoryEntry {
   timestamp: Date
 }
 
-// ─── Projects ────────────────────────────────────────────────────────────────
-
+// ─── Projects ─────────────────────────────────────────────────────────────────
 export interface Project {
   id: string
   name: string
@@ -92,15 +174,14 @@ export interface Project {
 export interface ProjectMember {
   id: string
   name: string
-  avatar: string   // initials
-  color: string    // accent hue
+  avatar: string
+  color: string
   online: boolean
   lastSeen: string
   projectId: string
 }
 
-// ─── Flows ───────────────────────────────────────────────────────────────────
-
+// ─── Flows ────────────────────────────────────────────────────────────────────
 export interface FlowNode {
   id: string
   type: 'request' | 'condition' | 'delay' | 'start' | 'end'
@@ -129,8 +210,7 @@ export interface Flow {
   projectId?: string
 }
 
-// ─── Specs ───────────────────────────────────────────────────────────────────
-
+// ─── Specs ────────────────────────────────────────────────────────────────────
 export interface SpecParameter {
   name: string
   in: 'path' | 'query' | 'header' | 'body'
@@ -167,8 +247,7 @@ export interface Spec {
   projectId?: string
 }
 
-// ─── Sync ────────────────────────────────────────────────────────────────────
-
+// ─── Sync ─────────────────────────────────────────────────────────────────────
 export type SyncEventType =
   | 'member_joined'
   | 'member_left'
@@ -187,10 +266,11 @@ export interface SyncEvent {
 
 export type SidebarSection = 'collections' | 'environments' | 'history' | 'flows' | 'specs' | 'projects'
 
-export interface Response {
-  headers: string;
-  body: string;
-  status: number;
-  time: number ;
-  size: number ;
+// ─── User profile ─────────────────────────────────────────────────────────────
+export interface UserProfile {
+  name: string
+  email: string
+  color: string
+  avatarInitials: string
+  theme: 'dark' | 'light' | 'system'
 }

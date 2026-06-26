@@ -11,9 +11,11 @@ import { FlowsPanel } from './FlowsPanel'
 import { SpecsPanel } from './SpecsPanel'
 import { ProjectModal } from './ProjectModal'
 import { EnvironmentEditor } from './EnvironmentEditor'
+import { ProfileSettings } from './ProfileSettings'
 import { useSync } from './hooks/useSync'
 import { useWorkspace } from './hooks/useWorkspace'
 import { cn } from '@/lib/utils'
+import {BodyType} from "@/components/api-client/types";
 
 export function ApiClient() {
   const workspace = useWorkspace()
@@ -35,6 +37,7 @@ export function ApiClient() {
             members={sync.members}
             activeProject={activeProject}
             onOpenProjects={() => workspace.setProjectModalOpen(true)}
+            onOpenProfileSettings={() => workspace.setProfileSettingsOpen(true)}
         />
 
         <div className="flex flex-1 overflow-hidden">
@@ -92,13 +95,27 @@ export function ApiClient() {
                             headers={workspace.activeTab.headers}
                             params={workspace.activeTab.params}
                             body={workspace.activeTab.body}
-                            bodyType={workspace.activeTab.bodyType as "none" | "json" | "form" | "form-data" | "x-www-form-urlencoded" | "raw" | "binary" | "text" | "xml"}
+                            bodyType={workspace.activeTab.bodyType as BodyType}
+                            formDataRows={workspace.activeTab.formDataRows}
+                            formEncodedRows={workspace.activeTab.formEncodedRows}
+                            graphqlQuery={workspace.activeTab.graphqlQuery}
+                            graphqlVariables={workspace.activeTab.graphqlVariables}
+                            auth={workspace.activeTab.auth || { type: 'none' }}
+                            scripts={workspace.activeTab.scripts || { preRequest: '', postResponse: '' }}
+                            settings={workspace.activeTab.settings || { httpVersion: 'auto', strictSSL: true, followRedirects: true }}
                             activeTab={workspace.activeTab.activeTab}
                             onTabChange={(tab) => workspace.updateActiveTab({ activeTab: tab })}
                             onHeadersChange={(headers) => workspace.updateActiveTab({ headers })}
                             onParamsChange={(params) => workspace.updateActiveTab({ params })}
                             onBodyChange={(body) => workspace.updateActiveTab({ body })}
                             onBodyTypeChange={(bodyType) => workspace.updateActiveTab({ bodyType })}
+                            onFormDataChange={(formDataRows) => workspace.updateActiveTab({ formDataRows })}
+                            onFormEncodedChange={(formEncodedRows) => workspace.updateActiveTab({ formEncodedRows })}
+                            onGraphqlQueryChange={(graphqlQuery) => workspace.updateActiveTab({ graphqlQuery })}
+                            onGraphqlVariablesChange={(graphqlVariables) => workspace.updateActiveTab({ graphqlVariables })}
+                            onAuthChange={(auth) => workspace.updateActiveTab({ auth })}
+                            onScriptsChange={(scripts) => workspace.updateActiveTab({ scripts })}
+                            onSettingsChange={(settings) => workspace.updateActiveTab({ settings })}
                         />
                     )}
                   </div>
@@ -135,6 +152,10 @@ export function ApiClient() {
                 }}
                 onClose={() => workspace.setEditingEnvironment(null)}
             />
+        )}
+
+        {workspace.profileSettingsOpen && (
+            <ProfileSettings onClose={() => workspace.setProfileSettingsOpen(false)} />
         )}
       </div>
   )

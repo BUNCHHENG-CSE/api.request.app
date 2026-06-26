@@ -1,7 +1,9 @@
 'use client'
 
+import { useState, useRef, useEffect } from 'react'
 import { Send, Save, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { METHOD_TEXT, METHOD_BG } from './ui/MethodBadge'
 import type { HttpMethod } from './types'
 
 interface UrlBarProps {
@@ -15,64 +17,90 @@ interface UrlBarProps {
 }
 
 const METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS']
-const METHOD_COLORS: Record<string, string> = {
-  GET: 'text-blue-500',
-  POST: 'text-amber-500',
-  PUT: 'text-indigo-500',
-  PATCH: 'text-purple-500',
-  DELETE: 'text-rose-500',
-}
 
 export function UrlBar({ method, url, isLoading, onMethodChange, onUrlChange, onSend, onSave }: UrlBarProps) {
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
   return (
-      <div className="flex items-center gap-3 px-4 py-3 bg-background border-b border-border">
-        {/* URL Input Group */}
-        <div className="flex flex-1 items-center bg-muted/10 border border-border rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary/50 transition-all shadow-sm">
-          <div className="relative group">
-            <select
-                value={method}
-                onChange={(e) => onMethodChange(e.target.value as HttpMethod)}
-                className={cn(
-                    "appearance-none bg-transparent pl-4 pr-8 py-2.5 text-xs font-bold outline-none cursor-pointer border-r border-border/50 hover:bg-muted/30 transition-colors",
-                    METHOD_COLORS[method] || "text-foreground"
-                )}
-            >
-              {METHODS.map((m) => <option key={m} value={m} className="text-foreground bg-background">{m}</option>)}
-            </select>
-            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 size-3 text-muted-foreground pointer-events-none" />
-          </div>
-
-          <input
-              value={url}
-              onChange={(e) => onUrlChange(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && onSend()}
-              placeholder="https://api.example.com/v1/users"
-              className="flex-1 bg-transparent px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none font-mono"
-          />
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 px-4 py-2.5 bg-background border-b border-border shrink-0">
+      {/* Method + URL grouped */}
+      <div className="flex flex-1 items-center bg-surface border border-border rounded-xl overflow-visible focus-within:ring-1 focus-within:ring-primary/25 focus-within:border-primary/40 transition-all shadow-sm">
+        {/* Method dropdown */}
+        <div ref={dropdownRef} className="relative shrink-0">
           <button
-              onClick={onSend}
-              disabled={isLoading || !url}
-              className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 rounded-lg text-sm font-semibold shadow-md shadow-primary/20 hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-          >
-            {isLoading ? (
-                <div className="size-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-            ) : (
-                <Send className="size-4" />
+            onClick={() => setDropdownOpen(!dropdownOpen)}
+            className={cn(
+              'flex items-center gap-1.5 pl-3.5 pr-2.5 py-2.5 text-xs font-bold border-r border-border/60 hover:bg-accent/50 transition-colors rounded-l-xl',
+              METHOD_TEXT[method],
             )}
-            Send
-          </button>
-          <button
-              onClick={onSave}
-              className="p-2.5 text-muted-foreground border border-border bg-muted/10 rounded-lg hover:bg-muted/40 hover:text-foreground transition-all shadow-sm"
-              title="Save Request"
           >
-            <Save className="size-4" />
+            {method}
+            <ChevronDown className={cn('size-3 text-muted-foreground transition-transform', dropdownOpen && 'rotate-180')} />
           </button>
+
+          {dropdownOpen && (
+            <div className="absolute top-full left-0 mt-1.5 z-50 bg-popover border border-border rounded-xl shadow-2xl overflow-hidden min-w-[120px]">
+              {METHODS.map((m) => (
+                <button
+                  key={m}
+                  onClick={() => { onMethodChange(m); setDropdownOpen(false) }}
+                  className={cn(
+                    'w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold transition-colors hover:bg-accent',
+                    METHOD_TEXT[m],
+                    m === method && 'bg-accent/50',
+                  )}
+                >
+                  <span className={cn('size-1.5 rounded-full', METHOD_BG[m].split(' ')[0])} />
+                  {m}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
+
+        {/* URL Input */}
+        <input
+          value={url}
+          onChange={(e) => onUrlChange(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && onSend()}
+          placeholder="https://api.example.com/v1/endpoint"
+          className="flex-1 bg-transparent px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/35 focus:outline-none font-mono"
+        />
       </div>
+
+      {/* Send button */}
+      <button
+        onClick={onSend}
+        disabled={isLoading || !url.trim()}
+        className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 rounded-xl text-sm font-semibold shadow-md shadow-primary/20 hover:bg-primary/90 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+      >
+        {isLoading ? (
+          <div className="size-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+        ) : (
+          <Send className="size-3.5" />
+        )}
+        Send
+      </button>
+
+      {/* Save */}
+      <button
+        onClick={onSave}
+        title="Save request"
+        className="p-2.5 rounded-xl border border-border bg-surface text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
+      >
+        <Save className="size-4" />
+      </button>
+    </div>
   )
 }

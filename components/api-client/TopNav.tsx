@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Search, Bell, Settings, ChevronDown, Zap, Gauge, LogOut, Settings2 } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { ChevronDown, Zap, Settings2, Settings, LogOut, Search, UserCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { ThemeToggle } from "@/components/web/theme-toggle"
+import { ThemeToggle } from '@/components/web/theme-toggle'
 import { MembersBar } from './MembersBar'
 import type { Project, ProjectMember } from './types'
 
@@ -15,94 +15,202 @@ interface TopNavProps {
   members: ProjectMember[]
   activeProject: Project | null
   onOpenProjects: () => void
+  onOpenProfileSettings: () => void
 }
 
 const ENVIRONMENTS = ['No Environment', 'Development', 'Staging', 'Production']
 
-export function TopNav({ environment, onEnvironmentChange, onEditEnvironment, self, members, activeProject, onOpenProjects }: TopNavProps) {
+const ENV_COLORS: Record<string, string> = {
+  Development: 'bg-blue-500',
+  Staging: 'bg-amber-500',
+  Production: 'bg-rose-500',
+  'No Environment': 'bg-muted-foreground',
+}
+
+export function TopNav({
+  environment,
+  onEnvironmentChange,
+  onEditEnvironment,
+  self,
+  members,
+  activeProject,
+  onOpenProjects,
+  onOpenProfileSettings,
+}: TopNavProps) {
   const [envOpen, setEnvOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [searchFocused, setSearchFocused] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const envRef = useRef<HTMLDivElement>(null)
+  const userRef = useRef<HTMLDivElement>(null)
 
-  // Bulletproof Hydration Fix
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => setMounted(true), [])
+  useEffect(() => {
+    const timer = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (envRef.current && !envRef.current.contains(e.target as Node)) setEnvOpen(false)
+      if (userRef.current && !userRef.current.contains(e.target as Node)) setUserMenuOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
 
   const selfName = self?.name || 'User'
-  const selfColor = self?.color || 'var(--primary)'
+  const selfColor = self?.color || '#3b82f6'
+  const initials = selfName.substring(0, 2).toUpperCase()
 
   return (
-      <header className="flex items-center justify-between px-5 h-13 bg-background border-b border-border/40 flex-shrink-0 backdrop-blur-sm">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2.5">
-            <div className="size-8 rounded-lg bg-primary flex items-center justify-center shadow-lg shadow-primary/25">
-              <Zap className="size-4 text-primary-foreground" />
-            </div>
-            <span className="text-sm font-bold tracking-tight">FlowAPI</span>
+    <header className="flex items-center gap-3 px-4 h-12 bg-card border-b border-border shrink-0">
+      {/* Logo + Workspace */}
+      <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-2">
+          <div className="size-7 rounded-lg bg-primary flex items-center justify-center shadow-lg shadow-primary/30">
+            <Zap className="size-3.5 text-primary-foreground" />
           </div>
-          <div className="h-5 w-px bg-border/50" />
-          <button onClick={onOpenProjects} className="flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
-            <span className="text-foreground/70">{activeProject ? activeProject.name : 'My Workspace'}</span>
-            <ChevronDown className="size-3.5" />
-          </button>
+          <span className="text-sm font-bold tracking-tight text-foreground">FlowAPI</span>
         </div>
 
-        <div className="flex-1 max-w-md mx-8">
-          <div className={cn('relative flex items-center gap-2 bg-muted/30 border rounded-lg px-3.5 py-2 transition-all', searchFocused ? 'border-primary/50 bg-muted/50 ring-1 ring-primary/20' : 'border-border/50 hover:border-border')}>
-            <Search className="size-4 text-muted-foreground" />
-            <input onFocus={() => setSearchFocused(true)} onBlur={() => setSearchFocused(false)} placeholder="Search requests, collections..." className="flex-1 bg-transparent text-sm placeholder:text-muted-foreground/50 focus:outline-none" />
-          </div>
+        <div className="h-4 w-px bg-border" />
+
+        <button
+          onClick={onOpenProjects}
+          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <span>{activeProject ? activeProject.name : 'My Workspace'}</span>
+          <ChevronDown className="size-3 opacity-60" />
+        </button>
+      </div>
+
+      {/* Search — centered */}
+      <div className="flex-1 flex justify-center px-4 max-w-lg mx-auto">
+        <div
+          className={cn(
+            'relative flex items-center gap-2.5 w-full bg-surface border rounded-lg px-3 py-1.5 transition-all',
+            searchFocused
+              ? 'border-primary/50 ring-1 ring-primary/20'
+              : 'border-border hover:border-border/80',
+          )}
+        >
+          <Search className="size-3.5 text-muted-foreground shrink-0" />
+          <input
+            onFocus={() => setSearchFocused(true)}
+            onBlur={() => setSearchFocused(false)}
+            placeholder="Search requests, collections..."
+            className="flex-1 bg-transparent text-xs placeholder:text-muted-foreground/50 focus:outline-none min-w-0"
+          />
+          <kbd className="hidden sm:inline-flex items-center gap-0.5 text-[9px] text-muted-foreground/40 shrink-0">
+            <span>⌘</span><span>K</span>
+          </kbd>
         </div>
+      </div>
 
-        <div className="flex items-center gap-3">
-          <MembersBar self={self} members={members} activeProject={activeProject} />
-          <div className="h-5 w-px bg-border/50" />
+      {/* Right side */}
+      <div className="flex items-center gap-2 shrink-0">
+        {/* Members bar */}
+        <MembersBar self={self} members={members} activeProject={activeProject} />
 
-          <div className="relative flex items-center">
-            <button onClick={() => setEnvOpen(!envOpen)} className="flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all bg-muted/20 border-border text-foreground/70 hover:text-foreground hover:bg-muted/40">
-              <span className="hidden sm:inline">{environment}</span>
-              <ChevronDown className={cn('size-3 transition-transform', envOpen && 'rotate-180')} />
-            </button>
+        <div className="h-4 w-px bg-border" />
 
-            {/* Edit Environment Button */}
-            {environment !== 'No Environment' && (
-                <button onClick={() => onEditEnvironment(environment)} className="ml-1 p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-md transition-colors" title="Edit Environment Variables">
-                  <Settings2 className="size-4" />
-                </button>
-            )}
-
-            {envOpen && (
-                <div className="absolute top-full right-0 mt-2 z-50 bg-popover text-popover-foreground border border-border rounded-lg shadow-xl overflow-hidden min-w-[180px]">
-                  {ENVIRONMENTS.map((env) => (
-                      <button key={env} onClick={() => { onEnvironmentChange(env); setEnvOpen(false) }} className={cn('w-full flex items-center px-3 py-2 text-xs transition-all hover:bg-muted', env === environment ? 'bg-muted/50 font-medium' : 'text-muted-foreground hover:text-foreground')}>
-                        <span className="flex-1 text-left">{env}</span>
-                        {env === environment && <span className="size-1.5 rounded-full bg-primary" />}
-                      </button>
-                  ))}
-                </div>
-            )}
-          </div>
-
-          <ThemeToggle />
-
-          <div className="relative">
+        {/* Environment selector */}
+        <div ref={envRef} className="relative">
+          <div className="flex items-center gap-0.5">
             <button
-                onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="relative flex items-center justify-center size-9 rounded-full text-xs font-bold text-white transition-all hover:ring-2 hover:ring-primary/50"
-                style={{ background: mounted ? `linear-gradient(135deg, ${selfColor}, ${selfColor.replace('0.65', '0.50')})` : 'var(--muted)' }}
+              onClick={() => setEnvOpen(!envOpen)}
+              className="flex items-center gap-2 px-2.5 py-1.5 rounded-l-lg border border-r-0 border-border bg-surface text-xs font-medium text-foreground/80 hover:bg-accent hover:text-foreground transition-colors"
             >
-              {mounted ? selfName.substring(0, 2).toUpperCase() : ''}
+              <span
+                className={cn('size-1.5 rounded-full shrink-0', ENV_COLORS[environment] ?? 'bg-muted-foreground')}
+              />
+              <span className="hidden sm:inline max-w-[96px] truncate">{environment}</span>
+              <ChevronDown className={cn('size-3 opacity-50 transition-transform', envOpen && 'rotate-180')} />
             </button>
-            {userMenuOpen && (
-                <div className="absolute top-full right-0 mt-3 z-50 bg-popover text-popover-foreground border border-border rounded-lg shadow-xl overflow-hidden w-48">
-                  <div className="px-3 py-3 border-b border-border/50"><p className="text-xs font-medium">{selfName}</p></div>
-                  <button className="w-full flex items-center gap-2 px-3 py-2.5 text-xs hover:bg-muted transition-all"><Settings className="size-4" /><span>Settings</span></button>
-                  <button className="w-full flex items-center gap-2 px-3 py-2.5 text-xs hover:bg-muted transition-all text-red-500"><LogOut className="size-4" /><span>Sign Out</span></button>
-                </div>
+            {environment !== 'No Environment' && (
+              <button
+                onClick={() => onEditEnvironment(environment)}
+                className="p-1.5 border border-border bg-surface rounded-r-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                title="Edit environment variables"
+              >
+                <Settings2 className="size-3.5" />
+              </button>
             )}
           </div>
+
+          {envOpen && (
+            <div className="absolute top-full right-0 mt-1.5 z-50 bg-popover border border-border rounded-xl shadow-2xl overflow-hidden min-w-[176px]">
+              <div className="px-3 py-2 border-b border-border/50">
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  Environments
+                </p>
+              </div>
+              {ENVIRONMENTS.map((env) => (
+                <button
+                  key={env}
+                  onClick={() => { onEnvironmentChange(env); setEnvOpen(false) }}
+                  className={cn(
+                    'w-full flex items-center gap-2.5 px-3 py-2 text-xs transition-colors',
+                    env === environment
+                      ? 'bg-primary/10 text-primary font-medium'
+                      : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+                  )}
+                >
+                  <span className={cn('size-1.5 rounded-full shrink-0', ENV_COLORS[env] ?? 'bg-muted-foreground')} />
+                  <span className="flex-1 text-left">{env}</span>
+                  {env === environment && <span className="size-1 rounded-full bg-primary" />}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
-      </header>
+
+        <ThemeToggle />
+
+        {/* Avatar / user menu */}
+        <div ref={userRef} className="relative">
+          <button
+            onClick={() => setUserMenuOpen(!userMenuOpen)}
+            className="relative flex items-center justify-center size-7 rounded-full text-[10px] font-bold text-white ring-2 ring-transparent hover:ring-primary/40 transition-all shrink-0"
+            style={{ background: mounted ? selfColor : 'var(--muted)' }}
+            suppressHydrationWarning
+          >
+            {mounted ? initials : ''}
+            <span className="absolute -bottom-0.5 -right-0.5 size-2 rounded-full bg-green-500 border-2 border-background" />
+          </button>
+
+          {userMenuOpen && (
+            <div className="absolute top-full right-0 mt-2 z-50 bg-popover border border-border rounded-xl shadow-2xl overflow-hidden w-52">
+              <div className="px-4 py-3 border-b border-border/50">
+                <p className="text-xs font-semibold text-foreground truncate">{selfName}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5 truncate">developer@flowapi.dev</p>
+              </div>
+              <div className="py-1">
+                <button
+                  onClick={() => { setUserMenuOpen(false); onOpenProfileSettings() }}
+                  className="w-full flex items-center gap-2.5 px-4 py-2 text-xs text-foreground/80 hover:bg-accent hover:text-foreground transition-colors"
+                >
+                  <UserCircle className="size-3.5 text-muted-foreground" />
+                  Profile Settings
+                </button>
+                <button
+                  onClick={() => setUserMenuOpen(false)}
+                  className="w-full flex items-center gap-2.5 px-4 py-2 text-xs text-foreground/80 hover:bg-accent hover:text-foreground transition-colors"
+                >
+                  <Settings className="size-3.5 text-muted-foreground" />
+                  Preferences
+                </button>
+              </div>
+              <div className="border-t border-border/50 py-1">
+                <button className="w-full flex items-center gap-2.5 px-4 py-2 text-xs text-rose-400 hover:bg-rose-500/10 transition-colors">
+                  <LogOut className="size-3.5" />
+                  Sign Out
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </header>
   )
 }

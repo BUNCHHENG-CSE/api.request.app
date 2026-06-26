@@ -15,7 +15,7 @@ interface ProjectModalProps {
   onClose: () => void
 }
 
-export function ProjectModal({ projects, activeProjectId, self, onCreateProject, onJoinProject, onSelectProject, onClose }: ProjectModalProps) {
+export function ProjectModal({ projects, activeProjectId, onCreateProject, onJoinProject, onSelectProject, onClose }: ProjectModalProps) {
   const [mode, setMode] = useState<'list' | 'create' | 'join'>('list')
   const [name, setName] = useState('')
   const [code, setCode] = useState('')
