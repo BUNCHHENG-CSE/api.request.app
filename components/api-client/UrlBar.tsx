@@ -1,31 +1,8 @@
 'use client'
 
-import { useState, useRef } from 'react'
-import { Send, ChevronDown, Save, Star, Loader2 } from 'lucide-react'
+import { Send, Save, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { HttpMethod } from './types'
-
-const METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS']
-
-const METHOD_STYLES: Record<HttpMethod, string> = {
-  GET: 'text-[oklch(0.65_0.17_145)]',
-  POST: 'text-[oklch(0.72_0.16_65)]',
-  PUT: 'text-[oklch(0.65_0.18_255)]',
-  PATCH: 'text-[oklch(0.65_0.15_220)]',
-  DELETE: 'text-[oklch(0.65_0.22_25)]',
-  HEAD: 'text-muted-foreground',
-  OPTIONS: 'text-muted-foreground',
-}
-
-const METHOD_SEND_STYLES: Record<HttpMethod, string> = {
-  GET: 'bg-[oklch(0.65_0.17_145)] hover:bg-[oklch(0.58_0.17_145)] shadow-[0_0_16px_oklch(0.65_0.17_145/0.3)]',
-  POST: 'bg-[oklch(0.62_0.16_65)] hover:bg-[oklch(0.55_0.16_65)] shadow-[0_0_16px_oklch(0.62_0.16_65/0.3)]',
-  PUT: 'bg-[oklch(0.65_0.18_255)] hover:bg-[oklch(0.58_0.18_255)] shadow-[0_0_16px_oklch(0.65_0.18_255/0.3)]',
-  PATCH: 'bg-[oklch(0.65_0.15_220)] hover:bg-[oklch(0.58_0.15_220)] shadow-[0_0_16px_oklch(0.65_0.15_220/0.3)]',
-  DELETE: 'bg-[oklch(0.65_0.22_25)] hover:bg-[oklch(0.58_0.22_25)] shadow-[0_0_16px_oklch(0.65_0.22_25/0.3)]',
-  HEAD: 'bg-muted hover:bg-muted/80',
-  OPTIONS: 'bg-muted hover:bg-muted/80',
-}
 
 interface UrlBarProps {
   method: HttpMethod
@@ -37,91 +14,65 @@ interface UrlBarProps {
   onSave: () => void
 }
 
+const METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS']
+const METHOD_COLORS: Record<string, string> = {
+  GET: 'text-blue-500',
+  POST: 'text-amber-500',
+  PUT: 'text-indigo-500',
+  PATCH: 'text-purple-500',
+  DELETE: 'text-rose-500',
+}
+
 export function UrlBar({ method, url, isLoading, onMethodChange, onUrlChange, onSend, onSave }: UrlBarProps) {
-  const [methodOpen, setMethodOpen] = useState(false)
-  const dropdownRef = useRef<HTMLDivElement>(null)
-
   return (
-    <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-[oklch(0.13_0_0)]">
-      {/* Method selector */}
-      <div className="relative flex-shrink-0" ref={dropdownRef}>
-        <button
-          onClick={() => setMethodOpen(!methodOpen)}
-          className={cn(
-            'flex items-center gap-1.5 px-3 py-2 rounded-lg border text-sm font-bold tracking-wide transition-all duration-150',
-            'bg-muted/50 border-border hover:border-border/80 hover:bg-muted',
-            METHOD_STYLES[method]
-          )}
-        >
-          {method}
-          <ChevronDown className={cn('size-3.5 text-muted-foreground transition-transform duration-200', methodOpen && 'rotate-180')} />
-        </button>
-
-        {methodOpen && (
-          <div className="absolute top-full left-0 mt-1.5 z-50 bg-[oklch(0.17_0_0)] border border-border rounded-xl shadow-2xl overflow-hidden min-w-[130px]">
-            {METHODS.map((m) => (
-              <button
-                key={m}
-                onClick={() => { onMethodChange(m); setMethodOpen(false) }}
+      <div className="flex items-center gap-3 px-4 py-3 bg-background border-b border-border">
+        {/* URL Input Group */}
+        <div className="flex flex-1 items-center bg-muted/10 border border-border rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary/50 transition-all shadow-sm">
+          <div className="relative group">
+            <select
+                value={method}
+                onChange={(e) => onMethodChange(e.target.value as HttpMethod)}
                 className={cn(
-                  'w-full flex items-center gap-3 px-3 py-2 text-sm font-bold tracking-wide transition-all',
-                  'hover:bg-muted/60',
-                  m === method ? 'bg-muted/40' : '',
-                  METHOD_STYLES[m]
+                    "appearance-none bg-transparent pl-4 pr-8 py-2.5 text-xs font-bold outline-none cursor-pointer border-r border-border/50 hover:bg-muted/30 transition-colors",
+                    METHOD_COLORS[method] || "text-foreground"
                 )}
-              >
-                {m}
-                {m === method && (
-                  <span className="ml-auto size-1.5 rounded-full bg-current opacity-70" />
-                )}
-              </button>
-            ))}
+            >
+              {METHODS.map((m) => <option key={m} value={m} className="text-foreground bg-background">{m}</option>)}
+            </select>
+            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 size-3 text-muted-foreground pointer-events-none" />
           </div>
-        )}
-      </div>
 
-      {/* URL input */}
-      <div className="flex-1 relative">
-        <input
-          value={url}
-          onChange={(e) => onUrlChange(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && onSend()}
-          placeholder="Enter request URL..."
-          className={cn(
-            'w-full bg-muted/30 border border-border rounded-lg px-4 py-2 text-sm font-mono text-foreground',
-            'placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/40',
-            'transition-all duration-150'
-          )}
-          spellCheck={false}
-        />
-      </div>
+          <input
+              value={url}
+              onChange={(e) => onUrlChange(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && onSend()}
+              placeholder="https://api.example.com/v1/users"
+              className="flex-1 bg-transparent px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none font-mono"
+          />
+        </div>
 
-      {/* Actions */}
-      <div className="flex items-center gap-2 flex-shrink-0">
-        <button
-          onClick={onSave}
-          title="Save request"
-          className="flex items-center justify-center size-9 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:border-border/60 hover:bg-muted transition-all"
-        >
-          <Save className="size-4" />
-        </button>
-
-        <button
-          onClick={onSend}
-          disabled={isLoading}
-          className={cn(
-            'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white transition-all duration-200 disabled:opacity-60',
-            METHOD_SEND_STYLES[method]
-          )}
-        >
-          {isLoading ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            <Send className="size-4" />
-          )}
-          <span>{isLoading ? 'Sending...' : 'Send'}</span>
-        </button>
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2">
+          <button
+              onClick={onSend}
+              disabled={isLoading || !url}
+              className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 rounded-lg text-sm font-semibold shadow-md shadow-primary/20 hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          >
+            {isLoading ? (
+                <div className="size-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+            ) : (
+                <Send className="size-4" />
+            )}
+            Send
+          </button>
+          <button
+              onClick={onSave}
+              className="p-2.5 text-muted-foreground border border-border bg-muted/10 rounded-lg hover:bg-muted/40 hover:text-foreground transition-all shadow-sm"
+              title="Save Request"
+          >
+            <Save className="size-4" />
+          </button>
+        </div>
       </div>
-    </div>
   )
 }

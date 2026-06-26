@@ -1,28 +1,8 @@
 'use client'
 
-import { X, Plus, Circle } from 'lucide-react'
+import { X, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { HttpMethod, RequestTab } from './types'
-
-const METHOD_DOT: Record<HttpMethod, string> = {
-  GET: 'bg-[oklch(0.65_0.17_145)]',
-  POST: 'bg-[oklch(0.72_0.16_65)]',
-  PUT: 'bg-[oklch(0.65_0.18_255)]',
-  PATCH: 'bg-[oklch(0.65_0.15_220)]',
-  DELETE: 'bg-[oklch(0.65_0.22_25)]',
-  HEAD: 'bg-muted-foreground',
-  OPTIONS: 'bg-muted-foreground',
-}
-
-const METHOD_TEXT: Record<HttpMethod, string> = {
-  GET: 'text-[oklch(0.65_0.17_145)]',
-  POST: 'text-[oklch(0.72_0.16_65)]',
-  PUT: 'text-[oklch(0.65_0.18_255)]',
-  PATCH: 'text-[oklch(0.65_0.15_220)]',
-  DELETE: 'text-[oklch(0.65_0.22_25)]',
-  HEAD: 'text-muted-foreground',
-  OPTIONS: 'text-muted-foreground',
-}
+import type { RequestTab } from './types'
 
 interface TabBarProps {
   tabs: RequestTab[]
@@ -32,65 +12,51 @@ interface TabBarProps {
   onNewTab: () => void
 }
 
+const METHOD_COLORS: Record<string, string> = {
+  GET: 'text-blue-500',
+  POST: 'text-amber-500',
+  PUT: 'text-indigo-500',
+  PATCH: 'text-purple-500',
+  DELETE: 'text-rose-500',
+}
+
 export function TabBar({ tabs, activeTabId, onTabSelect, onTabClose, onNewTab }: TabBarProps) {
   return (
-    <div className="flex items-stretch bg-[oklch(0.10_0_0)] border-b border-border overflow-x-auto">
-      {tabs.map((tab) => {
-        const isActive = tab.id === activeTabId
-        const displayName = tab.name || tab.url.replace(/^https?:\/\//, '').split('/').slice(0, 2).join('/') || 'New Request'
-
-        return (
-          <div
-            key={tab.id}
-            onClick={() => onTabSelect(tab.id)}
-            className={cn(
-              'relative flex items-center gap-2 px-3 py-2.5 min-w-0 max-w-52 flex-shrink-0 cursor-pointer border-r border-border transition-all group',
-              isActive
-                ? 'bg-[oklch(0.13_0_0)] text-foreground'
-                : 'bg-[oklch(0.10_0_0)] text-muted-foreground hover:bg-[oklch(0.12_0_0)] hover:text-foreground/70'
-            )}
-          >
-            {/* Active indicator */}
-            {isActive && (
-              <span className="absolute top-0 left-0 right-0 h-0.5 bg-primary" />
-            )}
-
-            {/* Method dot */}
-            <span className={cn('size-2 rounded-full flex-shrink-0', METHOD_DOT[tab.method])} />
-
-            {/* Method label */}
-            <span className={cn('text-[10px] font-bold flex-shrink-0', METHOD_TEXT[tab.method])}>
+      <div className="flex items-center bg-muted/20 border-b border-border overflow-x-auto no-scrollbar pt-2 px-2 gap-1.5">
+        {tabs.map((tab) => {
+          const isActive = tab.id === activeTabId
+          return (
+              <div
+                  key={tab.id}
+                  className={cn(
+                      "group relative flex items-center gap-2 px-3 py-2 min-w-35 max-w-50 border border-transparent rounded-t-lg transition-all cursor-pointer select-none",
+                      isActive
+                          ? "bg-background border-border border-b-transparent z-10 before:absolute before:-bottom-px before:left-0 before:right-0 before:h-0.5 before:bg-background"
+                          : "hover:bg-muted/50 text-muted-foreground border-b-border"
+                  )}
+                  onClick={() => onTabSelect(tab.id)}
+              >
+                {/* THIS LINE IS FIXED: The method color is always applied now */}
+                <span className={cn("text-[9px] font-bold tracking-wide", METHOD_COLORS[tab.method] || "text-muted-foreground")}>
               {tab.method}
             </span>
+                <span className={cn("flex-1 text-xs truncate", isActive ? "text-foreground font-medium" : "text-muted-foreground")}>
+              {tab.name || tab.url || 'Untitled Request'}
+            </span>
+                <button
+                    onClick={(e) => { e.stopPropagation(); onTabClose(tab.id) }}
+                    className={cn("p-0.5 rounded-md transition-colors", isActive ? "text-muted-foreground hover:bg-muted hover:text-foreground" : "opacity-0 group-hover:opacity-100 text-muted-foreground/50 hover:bg-muted/80 hover:text-foreground")}
+                >
+                  <X className="size-3" />
+                </button>
+                {isActive && <div className="absolute top-0 left-0 right-0 h-0.5 bg-primary rounded-t-lg" />}
+              </div>
+          )
+        })}
 
-            {/* Tab name */}
-            <span className="truncate text-xs">{displayName}</span>
-
-            {/* Modified indicator / close button */}
-            <button
-              onClick={(e) => { e.stopPropagation(); onTabClose(tab.id) }}
-              className={cn(
-                'ml-auto flex-shrink-0 size-4 flex items-center justify-center rounded transition-all',
-                'text-muted-foreground hover:text-foreground hover:bg-muted',
-                !isActive && 'opacity-0 group-hover:opacity-100'
-              )}
-            >
-              <X className="size-2.5" />
-            </button>
-          </div>
-        )
-      })}
-
-      {/* New tab button */}
-      <button
-        onClick={onNewTab}
-        className="flex items-center justify-center px-3 py-2.5 text-muted-foreground hover:text-foreground hover:bg-[oklch(0.13_0_0)] transition-all flex-shrink-0"
-      >
-        <Plus className="size-4" />
-      </button>
-
-      {/* Spacer */}
-      <div className="flex-1" />
-    </div>
+        <button onClick={onNewTab} className="p-1.5 mx-1 rounded-md text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-colors">
+          <Plus className="size-4" />
+        </button>
+      </div>
   )
 }

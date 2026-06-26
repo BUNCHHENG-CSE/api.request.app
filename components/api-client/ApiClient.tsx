@@ -27,6 +27,10 @@ export function ApiClient() {
         <TopNav
             environment={workspace.environment}
             onEnvironmentChange={workspace.setEnvironment}
+            onEditEnvironment={(envName) => {
+                const env = workspace.environments.find((e) => e.name === envName)
+                if (env) workspace.setEditingEnvironment(env)
+            }}
             self={sync.self}
             members={sync.members}
             activeProject={activeProject}
@@ -34,7 +38,7 @@ export function ApiClient() {
         />
 
         <div className="flex flex-1 overflow-hidden">
-          <div className={cn('flex-shrink-0 border-r border-border overflow-hidden flex flex-col transition-all', isFullscreenView ? 'w-14' : 'w-72')}>
+          <div className={cn('shrink-0 border-r border-border overflow-hidden flex flex-col transition-all', isFullscreenView ? 'w-14' : 'w-72')}>
             <Sidebar
                 collections={workspace.collections}
                 history={workspace.history}
@@ -82,13 +86,13 @@ export function ApiClient() {
                 )}
 
                 <div className="flex-1 overflow-hidden flex flex-col min-h-0">
-                  <div className="flex-shrink-0 border-b border-border" style={{ height: '42%', minHeight: 170 }}>
+                  <div className="shrink-0 border-b border-border" style={{ height: '42%', minHeight: 170 }}>
                     {workspace.activeTab && (
                         <RequestPanel
                             headers={workspace.activeTab.headers}
                             params={workspace.activeTab.params}
                             body={workspace.activeTab.body}
-                            bodyType={workspace.activeTab.bodyType}
+                            bodyType={workspace.activeTab.bodyType as "none" | "json" | "form" | "form-data" | "x-www-form-urlencoded" | "raw" | "binary" | "text" | "xml"}
                             activeTab={workspace.activeTab.activeTab}
                             onTabChange={(tab) => workspace.updateActiveTab({ activeTab: tab })}
                             onHeadersChange={(headers) => workspace.updateActiveTab({ headers })}

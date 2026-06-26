@@ -36,7 +36,7 @@ export interface RequestTab {
   headers: Header[]
   params: QueryParam[]
   body: string
-  bodyType: 'none' | 'json' | 'form-data' | 'x-www-form-urlencoded' | 'raw' | 'binary'
+  bodyType: "none" | "json" | "form" | "form-data" | "x-www-form-urlencoded" | "raw" | "binary" | "text" | "xml";
   activeTab: 'params' | 'headers' | 'auth' | 'body' | 'scripts' | 'settings'
 }
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import {useEffect, useState} from 'react'
 import { Users, X, Circle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { ProjectMember, Project } from './types'
@@ -13,8 +13,14 @@ interface MembersBarProps {
 
 function MemberAvatar({ member, isSelf, size = 'sm' }: { member: ProjectMember, isSelf?: boolean, size?: 'sm' | 'md' }) {
   const [showTooltip, setShowTooltip] = useState(false)
-  const initials = member?.name ? member.name.substring(0, 2).toUpperCase() : 'U'
-
+    const [mounted, setMounted] = useState(false) // 1. Add this state
+// 2. Use useEffect to detect when the component is on the client
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setMounted(true)
+    }, [])
+    const initials = member?.name ? member.name.substring(0, 2).toUpperCase() : 'U'
+    const memberColor = member?.color || 'var(--primary)'
   return (
       <div className="relative cursor-pointer" onMouseEnter={() => setShowTooltip(true)} onMouseLeave={() => setShowTooltip(false)}>
         <div
@@ -24,10 +30,12 @@ function MemberAvatar({ member, isSelf, size = 'sm' }: { member: ProjectMember, 
                 !member.online && 'opacity-40 grayscale',
                 isSelf && 'ring-2 ring-primary ring-offset-2 ring-offset-background'
             )}
-            style={{ background: `linear-gradient(135deg, ${member.color}, ${member.color.replace('0.65', '0.50')})` }}
+            style={{
+                background: mounted ? `linear-gradient(135deg, ${memberColor}, ${memberColor.replace('0.65', '0.50')})` : 'var(--muted)'
+            }}
             suppressHydrationWarning
         >
-          {initials}
+            {mounted ? initials : ''}
         </div>
 
         <div className={cn(
