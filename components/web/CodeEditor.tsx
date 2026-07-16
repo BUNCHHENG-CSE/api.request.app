@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useCallback } from 'react'
+import React, { useRef, useCallback } from 'react'
 import { cn } from '@/lib/utils'
 
 interface CodeEditorProps {

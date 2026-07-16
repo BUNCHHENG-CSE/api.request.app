@@ -13,6 +13,25 @@ export const METHOD_TEXT: Record<HttpMethod, string> = {
   HEAD:    'text-slate-400',
   OPTIONS: 'text-slate-400',
 }
+export const METHOD_COLORS: Record<HttpMethod, string> = {
+  GET:     'text-blue-500',
+  POST:    'text-amber-500',
+  PUT:     'text-indigo-500',
+  PATCH:   'text-purple-500',
+  DELETE:  'text-rose-500',
+  HEAD:    'text-muted-foreground',
+  OPTIONS: 'text-muted-foreground',
+}
+
+// const METHOD_BG: Record<HttpMethod, string> = {
+//   GET:     'bg-blue-500/10 border-blue-500/30',
+//   POST:    'bg-amber-500/10 border-amber-500/30',
+//   PUT:     'bg-indigo-500/10 border-indigo-500/30',
+//   PATCH:   'bg-purple-500/10 border-purple-500/30',
+//   DELETE:  'bg-rose-500/10 border-rose-500/30',
+//   HEAD:    'bg-muted/10 border-border',
+//   OPTIONS: 'bg-muted/10 border-border',
+// }
 
 export const METHOD_BG: Record<HttpMethod, string> = {
   GET:     'bg-blue-500/10 border-blue-500/25 text-blue-400',
@@ -22,6 +41,15 @@ export const METHOD_BG: Record<HttpMethod, string> = {
   DELETE:  'bg-rose-500/10 border-rose-500/25 text-rose-400',
   HEAD:    'bg-slate-500/10 border-slate-500/25 text-slate-400',
   OPTIONS: 'bg-slate-500/10 border-slate-500/25 text-slate-400',
+}
+export const METHOD_BADGE: Record<HttpMethod, string> = {
+  GET:     'bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30',
+  POST:    'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30',
+  PUT:     'bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30',
+  PATCH:   'bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30',
+  DELETE:  'bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30',
+  HEAD:    'bg-muted/20 text-muted-foreground border border-border',
+  OPTIONS: 'bg-muted/20 text-muted-foreground border border-border',
 }
 
 interface MethodBadgeProps {

@@ -3,27 +3,9 @@
 import { useState } from 'react'
 import { Layers, ChevronDown, ChevronRight, Download, Search, AlertTriangle, Copy, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { Spec, SpecEndpoint, HttpMethod } from '@/types/api.types'
-
-const METHOD_COLORS: Record<HttpMethod, string> = {
-  GET:     'text-blue-500',
-  POST:    'text-amber-500',
-  PUT:     'text-indigo-500',
-  PATCH:   'text-purple-500',
-  DELETE:  'text-rose-500',
-  HEAD:    'text-muted-foreground',
-  OPTIONS: 'text-muted-foreground',
-}
-
-const METHOD_BADGE: Record<HttpMethod, string> = {
-  GET:     'bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30',
-  POST:    'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30',
-  PUT:     'bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30',
-  PATCH:   'bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30',
-  DELETE:  'bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30',
-  HEAD:    'bg-muted/20 text-muted-foreground border border-border',
-  OPTIONS: 'bg-muted/20 text-muted-foreground border border-border',
-}
+import { METHOD_COLORS, METHOD_BADGE } from '@/components/web/MethodBadge'
+import { useSync } from '@/hooks/useSync'
+import type { SpecEndpoint, HttpMethod } from '@/types/api.types'
 
 function getStatusColor(status: number): string {
   return status < 300 ? 'text-green-500' : status < 400 ? 'text-amber-500' : 'text-rose-500'
@@ -126,11 +108,10 @@ function EndpointCard({ endpoint, baseUrl }: { endpoint: SpecEndpoint; baseUrl: 
   )
 }
 
-interface SpecsPanelProps {
-  specs: Spec[]
-}
+export function SpecsPanel() {
+  const sync = useSync()
+  const specs = sync.specs
 
-export function SpecsPanel({ specs }: SpecsPanelProps) {
   const [activeSpecId, setActiveSpecId] = useState<string>(specs[0]?.id ?? '')
   const [search, setSearch] = useState('')
   const [expandedTags, setExpandedTags] = useState<Record<string, boolean>>({})

@@ -3,38 +3,40 @@
 import { useState } from 'react'
 import { X, Plus, LogIn, Folder, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { Project, ProjectMember } from '@/types/api.types'
+import { useWorkspaceStore } from '@/store/useWorkspaceStore'
+import { useSync } from '@/hooks/useSync'
 
-interface ProjectModalProps {
-  projects: Project[]
-  activeProjectId: string | null
-  self: ProjectMember
-  onCreateProject: (name: string, desc: string) => void
-  onJoinProject: (code: string) => void
-  onSelectProject: (id: string) => void
-  onClose: () => void
-}
+export function ProjectModal() {
+  const isOpen = useWorkspaceStore((state) => state.projectModalOpen)
+  const setProjectModalOpen = useWorkspaceStore((state) => state.setProjectModalOpen)
 
-export function ProjectModal({ projects, activeProjectId, onCreateProject, onJoinProject, onSelectProject, onClose }: ProjectModalProps) {
+  const sync = useSync()
+  const { projects, activeProjectId, setActiveProjectId, createProject, joinProject } = sync
+
   const [mode, setMode] = useState<'list' | 'create' | 'join'>('list')
   const [name, setName] = useState('')
   const [code, setCode] = useState('')
+
+  if (!isOpen) return null
+
+  const handleClose = () => {
+    setProjectModalOpen(false)
+    setMode('list')
+  }
 
   return (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
         <div className="w-full max-w-md bg-popover text-popover-foreground border border-border rounded-xl shadow-2xl overflow-hidden flex flex-col">
 
-          {/* Header */}
           <div className="flex items-center justify-between px-5 py-4 border-b border-border bg-muted/10">
             <h2 className="text-sm font-semibold tracking-tight">
               {mode === 'list' ? 'Your Workspaces' : mode === 'create' ? 'Create Workspace' : 'Join Workspace'}
             </h2>
-            <button onClick={onClose} className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors">
+            <button onClick={handleClose} className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors">
               <X className="size-4" />
             </button>
           </div>
 
-          {/* Content */}
           <div className="p-5 flex-1 overflow-y-auto">
             {mode === 'list' && (
                 <div className="space-y-4">
@@ -47,7 +49,7 @@ export function ProjectModal({ projects, activeProjectId, onCreateProject, onJoi
                         projects.map((p) => (
                             <button
                                 key={p.id}
-                                onClick={() => { onSelectProject(p.id); onClose(); }}
+                                onClick={() => { setActiveProjectId(p.id); handleClose(); }}
                                 className={cn(
                                     "w-full flex items-center justify-between p-3 rounded-lg border transition-all text-left group",
                                     p.id === activeProjectId
@@ -95,7 +97,7 @@ export function ProjectModal({ projects, activeProjectId, onCreateProject, onJoi
                   <div className="flex gap-2 pt-2">
                     <button onClick={() => setMode('list')} className="flex-1 py-2 rounded-lg text-xs font-medium text-muted-foreground hover:bg-muted transition-colors">Cancel</button>
                     <button
-                        onClick={() => { if(name) { onCreateProject(name, ''); onClose(); } }}
+                        onClick={() => { if(name) { createProject(name, ''); handleClose(); } }}
                         disabled={!name}
                         className="flex-1 py-2 rounded-lg text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-all shadow-sm"
                     >
@@ -120,7 +122,7 @@ export function ProjectModal({ projects, activeProjectId, onCreateProject, onJoi
                   <div className="flex gap-2 pt-2">
                     <button onClick={() => setMode('list')} className="flex-1 py-2 rounded-lg text-xs font-medium text-muted-foreground hover:bg-muted transition-colors">Cancel</button>
                     <button
-                        onClick={() => { if(code) { onJoinProject(code); onClose(); } }}
+                        onClick={() => { if(code) { joinProject(); handleClose(); } }}
                         disabled={code.length < 6}
                         className="flex-1 py-2 rounded-lg text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-all shadow-sm"
                     >

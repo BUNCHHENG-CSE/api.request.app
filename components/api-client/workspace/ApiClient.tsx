@@ -1,162 +1,67 @@
 'use client'
 
-import { TopNav } from '../layout/TopNav'
-import { Sidebar } from '../layout/Sidebar'
-import { TabBar } from '../layout/TabBar'
-import { UrlBar } from '../request/UrlBar'
-import { RequestPanel } from '../request/RequestPanel'
-import { ResponsePanel } from '../response/ResponsePanel'
-import { ConsolePanel } from '../response/ConsolePanel'
-import { FlowsPanel } from './FlowsPanel'
-import { SpecsPanel } from '../request/SpecsPanel'
-import { ProjectModal } from './ProjectModal'
-import { EnvironmentEditor } from './EnvironmentEditor'
-import { ProfileSettings } from './ProfileSettings'
-import { useSync } from '@/hooks/useSync'
-import { useWorkspace } from '@/store/useWorkspace'
-import { cn } from '@/lib/utils'
-import {BodyType} from "@/types/api.types";
+import {TopNav} from '@/components/api-client/layout/TopNav'
+import {Sidebar} from '@/components/api-client/layout/Sidebar'
+import {TabBar} from '@/components/api-client/layout/TabBar'
+import {UrlBar} from '@/components/api-client/request/UrlBar'
+import {RequestPanel} from '@/components/api-client/request/RequestPanel'
+import {ResponsePanel} from '@/components/api-client/response/ResponsePanel'
+import {ConsolePanel} from '@/components/api-client/response/ConsolePanel'
+import {FlowsPanel} from '@/components/api-client/workspace/FlowsPanel'
+import {SpecsPanel} from '@/components/api-client/request/SpecsPanel'
+import {ProjectModal} from '@/components/api-client/workspace/ProjectModal'
+import {EnvironmentEditor} from '@/components/api-client/workspace/EnvironmentEditor'
+import {ProfileSettings} from '@/components/api-client/workspace/ProfileSettings'
+import {useWorkspaceStore} from '@/store/useWorkspaceStore'
+import {cn} from '@/lib/utils'
 
 export function ApiClient() {
-  const workspace = useWorkspace()
-  const sync = useSync()
+    // We only need the sidebarSection to determine the layout structure
+    const sidebarSection = useWorkspaceStore((state) => state.sidebarSection)
+    const isFullscreenView = sidebarSection === 'flows' || sidebarSection === 'specs'
 
-  const activeProject = sync.projects.find((p) => p.id === sync.activeProjectId) ?? null
-  const isFullscreenView = workspace.sidebarSection === 'flows' || workspace.sidebarSection === 'specs'
+    return (
+        <div
+            className="flex flex-col h-screen overflow-hidden bg-background text-foreground transition-colors duration-300">
+            <TopNav/>
 
-  return (
-      <div className="flex flex-col h-screen overflow-hidden bg-background text-foreground transition-colors duration-300">
-        <TopNav
-            environment={workspace.environment}
-            onEnvironmentChange={workspace.setEnvironment}
-            onEditEnvironment={(envName) => {
-                const env = workspace.environments.find((e) => e.name === envName)
-                if (env) workspace.setEditingEnvironment(env)
-            }}
-            self={sync.self}
-            members={sync.members}
-            activeProject={activeProject}
-            onOpenProjects={() => workspace.setProjectModalOpen(true)}
-            onOpenProfileSettings={() => workspace.setProfileSettingsOpen(true)}
-        />
-
-        <div className="flex flex-1 overflow-hidden">
-          <div className={cn('shrink-0 border-r border-border overflow-hidden flex flex-col transition-all', isFullscreenView ? 'w-14' : 'w-72')}>
-            <Sidebar
-                collections={workspace.collections}
-                history={workspace.history}
-                onSelectRequest={workspace.handleSelectRequest}
-                onNewRequest={workspace.handleNewTab}
-                onToggleCollection={workspace.handleToggleCollection}
-                activeSection={workspace.sidebarSection}
-                onSectionChange={workspace.setSidebarSection}
-                onOpenProjects={() => workspace.setProjectModalOpen(true)}
-                activeProjectName={activeProject?.name}
-                onEditEnvironment={(envName) => {
-                  const env = workspace.environments.find((e) => e.name === envName)
-                  if (env) workspace.setEditingEnvironment(env)
-                }}
-            />
-          </div>
-
-          {isFullscreenView ? (
-              <div className="flex-1 overflow-hidden flex flex-col">
-                {workspace.sidebarSection === 'flows' && (
-                    <FlowsPanel flows={sync.flows} onUpdateFlow={sync.updateFlow} onCreateFlow={(name) => sync.createFlow(name, sync.activeProjectId ?? undefined)} />
-                )}
-                {workspace.sidebarSection === 'specs' && <SpecsPanel specs={sync.specs} />}
-              </div>
-          ) : (
-              <div className="flex flex-col flex-1 overflow-hidden">
-                <TabBar
-                    tabs={workspace.tabs}
-                    activeTabId={workspace.activeTabId}
-                    onTabSelect={workspace.setActiveTabId}
-                    onTabClose={workspace.handleCloseTab}
-                    onNewTab={workspace.handleNewTab}
-                />
-
-                {workspace.activeTab && (
-                    <UrlBar
-                        method={workspace.activeTab.method}
-                        url={workspace.activeTab.url}
-                        isLoading={workspace.loadingTabs.has(workspace.activeTabId)}
-                        onMethodChange={(m) => workspace.updateActiveTab({ method: m })}
-                        onUrlChange={(u) => workspace.updateActiveTab({ url: u })}
-                        onSend={workspace.handleSend}
-                        onSave={() => workspace.addLog('log', `Saved: ${workspace.activeTab.name || workspace.activeTab.url}`)}
-                    />
-                )}
-
-                <div className="flex-1 overflow-hidden flex flex-col min-h-0">
-                  <div className="shrink-0 border-b border-border" style={{ height: '42%', minHeight: 170 }}>
-                    {workspace.activeTab && (
-                        <RequestPanel
-                            headers={workspace.activeTab.headers}
-                            params={workspace.activeTab.params}
-                            body={workspace.activeTab.body}
-                            bodyType={workspace.activeTab.bodyType as BodyType}
-                            formDataRows={workspace.activeTab.formDataRows}
-                            formEncodedRows={workspace.activeTab.formEncodedRows}
-                            graphqlQuery={workspace.activeTab.graphqlQuery}
-                            graphqlVariables={workspace.activeTab.graphqlVariables}
-                            auth={workspace.activeTab.auth || { type: 'none' }}
-                            scripts={workspace.activeTab.scripts || { preRequest: '', postResponse: '' }}
-                            settings={workspace.activeTab.settings || { httpVersion: 'auto', strictSSL: true, followRedirects: true }}
-                            activeTab={workspace.activeTab.activeTab}
-                            onTabChange={(tab) => workspace.updateActiveTab({ activeTab: tab })}
-                            onHeadersChange={(headers) => workspace.updateActiveTab({ headers })}
-                            onParamsChange={(params) => workspace.updateActiveTab({ params })}
-                            onBodyChange={(body) => workspace.updateActiveTab({ body })}
-                            onBodyTypeChange={(bodyType) => workspace.updateActiveTab({ bodyType })}
-                            onFormDataChange={(formDataRows) => workspace.updateActiveTab({ formDataRows })}
-                            onFormEncodedChange={(formEncodedRows) => workspace.updateActiveTab({ formEncodedRows })}
-                            onGraphqlQueryChange={(graphqlQuery) => workspace.updateActiveTab({ graphqlQuery })}
-                            onGraphqlVariablesChange={(graphqlVariables) => workspace.updateActiveTab({ graphqlVariables })}
-                            onAuthChange={(auth) => workspace.updateActiveTab({ auth })}
-                            onScriptsChange={(scripts) => workspace.updateActiveTab({ scripts })}
-                            onSettingsChange={(settings) => workspace.updateActiveTab({ settings })}
-                        />
-                    )}
-                  </div>
-
-                  <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
-                    <ResponsePanel response={workspace.responses[workspace.activeTabId] ?? null} isLoading={workspace.loadingTabs.has(workspace.activeTabId)} />
-                  </div>
+            <div className="flex flex-1 overflow-hidden">
+                <div
+                    className={cn('shrink-0 border-r border-border overflow-hidden flex flex-col transition-all', isFullscreenView ? 'w-14' : 'w-72')}>
+                    <Sidebar/>
                 </div>
 
-                <ConsolePanel
-                    logs={workspace.logs}
-                    onClear={() => workspace.setLogs([])}
-                    isMinimized={workspace.consoleMinimized}
-                    onToggleMinimize={() => workspace.setConsoleMinimized(!workspace.consoleMinimized)}
-                />
-              </div>
-          )}
+                {isFullscreenView ? (
+                    <div className="flex-1 overflow-hidden flex flex-col">
+                        {sidebarSection === 'flows' && <FlowsPanel/>}
+                        {sidebarSection === 'specs' && <SpecsPanel/>}
+                    </div>
+                ) : (
+                    <div className="flex flex-col flex-1 overflow-hidden">
+                        <TabBar/>
+                        <UrlBar/>
+
+                        <div className="flex-1 overflow-hidden flex flex-col min-h-0">
+                            {/* Request area */}
+                            <div className="shrink-0 border-b border-border" style={{height: '42%', minHeight: 170}}>
+                                <RequestPanel/>
+                            </div>
+
+                            {/* Response area */}
+                            <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+                                <ResponsePanel/>
+                            </div>
+                        </div>
+
+                        <ConsolePanel/>
+                    </div>
+                )}
+            </div>
+
+            {/* Modals and Overlays */}
+            <ProjectModal/>
+            <EnvironmentEditor/>
+            <ProfileSettings/>
         </div>
-
-        {workspace.projectModalOpen && (
-            <ProjectModal
-                projects={sync.projects} activeProjectId={sync.activeProjectId} self={sync.self}
-                onCreateProject={sync.createProject} onJoinProject={sync.joinProject}
-                onSelectProject={(id) => sync.setActiveProjectId(id)} onClose={() => workspace.setProjectModalOpen(false)}
-            />
-        )}
-
-        {workspace.editingEnvironment && (
-            <EnvironmentEditor
-                environment={workspace.editingEnvironment}
-                onEnvironmentChange={(updatedEnv) => {
-                  workspace.setEnvironments(workspace.environments.map((e) => e.id === updatedEnv.id ? updatedEnv : e))
-                  workspace.setEditingEnvironment(null)
-                }}
-                onClose={() => workspace.setEditingEnvironment(null)}
-            />
-        )}
-
-        {workspace.profileSettingsOpen && (
-            <ProfileSettings onClose={() => workspace.setProfileSettingsOpen(false)} />
-        )}
-      </div>
-  )
+    )
 }

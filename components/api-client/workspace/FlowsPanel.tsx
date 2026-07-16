@@ -3,33 +3,9 @@
 import { useState, useRef, useCallback } from 'react'
 import { Play, Plus, GitBranch, Trash2, ChevronRight, CheckCircle2, XCircle, Loader2, StopCircle, RotateCcw, Zap } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { METHOD_COLORS, METHOD_BG } from '@/components/web/MethodBadge'
+import { useSync } from '@/hooks/useSync'
 import type { Flow, FlowNode, HttpMethod } from '@/types/api.types'
-
-const METHOD_COLORS: Record<HttpMethod, string> = {
-  GET:     'text-blue-500',
-  POST:    'text-amber-500',
-  PUT:     'text-indigo-500',
-  PATCH:   'text-purple-500',
-  DELETE:  'text-rose-500',
-  HEAD:    'text-muted-foreground',
-  OPTIONS: 'text-muted-foreground',
-}
-
-const METHOD_BG: Record<HttpMethod, string> = {
-  GET:     'bg-blue-500/10 border-blue-500/30',
-  POST:    'bg-amber-500/10 border-amber-500/30',
-  PUT:     'bg-indigo-500/10 border-indigo-500/30',
-  PATCH:   'bg-purple-500/10 border-purple-500/30',
-  DELETE:  'bg-rose-500/10 border-rose-500/30',
-  HEAD:    'bg-muted/10 border-border',
-  OPTIONS: 'bg-muted/10 border-border',
-}
-
-interface FlowsPanelProps {
-  flows: Flow[]
-  onUpdateFlow: (flow: Flow) => void
-  onCreateFlow: (name: string) => Flow
-}
 
 function Arrow({ fromX, fromY, toX, toY, label }: { fromX: number; fromY: number; toX: number; toY: number; label?: string }) {
   const NODE_W = 160
@@ -188,7 +164,12 @@ function NodeDetail({ node, onUpdate, onDelete }: { node: FlowNode; onUpdate: (n
   )
 }
 
-export function FlowsPanel({ flows, onUpdateFlow, onCreateFlow }: FlowsPanelProps) {
+export function FlowsPanel() {
+  const sync = useSync()
+  const flows = sync.flows
+  const onUpdateFlow = sync.updateFlow
+  const onCreateFlow = sync.createFlow
+
   const [activeFlowId, setActiveFlowId] = useState<string>(flows[0]?.id ?? '')
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
   const [running, setRunning] = useState(false)
@@ -244,7 +225,7 @@ export function FlowsPanel({ flows, onUpdateFlow, onCreateFlow }: FlowsPanelProp
 
   const handleCreateFlow = () => {
     if (!newFlowName.trim()) return
-    const flow = onCreateFlow(newFlowName.trim())
+    const flow = onCreateFlow(newFlowName.trim(), sync.activeProjectId ?? undefined)
     setActiveFlowId(flow.id)
     setNewFlowName('')
     setShowNewFlow(false)
