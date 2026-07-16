@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback } from 'react'
 import { Play, Plus, GitBranch, Trash2, ChevronRight, CheckCircle2, XCircle, Loader2, StopCircle, RotateCcw, Zap } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { Flow, FlowNode, HttpMethod } from './types'
+import type { Flow, FlowNode, HttpMethod } from '@/types/api.types'
 
 const METHOD_COLORS: Record<HttpMethod, string> = {
   GET:     'text-blue-500',
@@ -65,7 +65,7 @@ function NodeCard({ node, onClick, selected }: { node: FlowNode; onClick: () => 
             onClick={onClick}
             style={{ left: node.x, top: node.y, width: 80, position: 'absolute' }}
             className={cn(
-                'flex items-center justify-center h-[72px] rounded-full border-2 cursor-pointer transition-all select-none bg-background',
+                'flex items-center justify-center h-18 rounded-full border-2 cursor-pointer transition-all select-none bg-background',
                 selected ? 'border-primary shadow-lg shadow-primary/20 ring-2 ring-primary/20' : 'border-border hover:border-primary/50 hover:shadow-sm'
             )}
         >
@@ -80,7 +80,7 @@ function NodeCard({ node, onClick, selected }: { node: FlowNode; onClick: () => 
             onClick={onClick}
             style={{ left: node.x, top: node.y, width: 160, position: 'absolute' }}
             className={cn(
-                'flex items-center justify-center h-[72px] border-2 cursor-pointer transition-all select-none rounded-lg bg-amber-500/10 border-amber-500/40',
+                'flex items-center justify-center h-18 border-2 cursor-pointer transition-all select-none rounded-lg bg-amber-500/10 border-amber-500/40',
                 selected && 'border-amber-500 shadow-lg shadow-amber-500/20 ring-2 ring-amber-500/20',
                 'hover:shadow-sm'
             )}
@@ -108,7 +108,7 @@ function NodeCard({ node, onClick, selected }: { node: FlowNode; onClick: () => 
               'hover:shadow-md'
           )}
       >
-        <div className="px-3 py-2 flex items-center gap-2 h-[72px]">
+        <div className="px-3 py-2 flex items-center gap-2 h-18">
           <div className="flex flex-col gap-1 flex-1 min-w-0">
             <div className="flex items-center gap-1.5">
               {node.method && <span className={cn('text-[9px] font-bold tracking-wide', METHOD_COLORS[node.method])}>{node.method}</span>}
@@ -127,7 +127,7 @@ function NodeCard({ node, onClick, selected }: { node: FlowNode; onClick: () => 
 
 function NodeDetail({ node, onUpdate, onDelete }: { node: FlowNode; onUpdate: (n: FlowNode) => void; onDelete: () => void }) {
   return (
-      <div className="w-80 flex-shrink-0 border-l border-border bg-background/50 backdrop-blur-md flex flex-col overflow-y-auto shadow-2xl z-20">
+      <div className="w-80 shrink-0 border-l border-border bg-background/50 backdrop-blur-md flex flex-col overflow-y-auto shadow-2xl z-20">
         <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/10">
           <span className="text-xs font-semibold text-foreground">Node Properties</span>
           <button onClick={onDelete} className="text-muted-foreground hover:text-rose-500 transition-colors bg-muted/30 p-1.5 rounded-md hover:bg-rose-500/10">
@@ -178,7 +178,7 @@ function NodeDetail({ node, onUpdate, onDelete }: { node: FlowNode; onUpdate: (n
                   <span className={cn('text-xs font-bold', node.response.status < 400 ? 'text-green-500' : 'text-rose-500')}>{node.response.status}</span>
                   <span className="text-[10px] text-muted-foreground bg-muted/40 px-1.5 py-0.5 rounded">{node.response.time}ms</span>
                 </div>
-                <pre className="text-[10px] text-muted-foreground font-mono overflow-x-auto max-h-32 overflow-y-auto whitespace-pre-wrap break-words bg-background/50 p-2 rounded border border-border/50">
+                <pre className="text-[10px] text-muted-foreground font-mono overflow-x-auto max-h-32 overflow-y-auto whitespace-pre-wrap wrap-break-word bg-background/50 p-2 rounded border border-border/50">
               {node.response.body.slice(0, 200)}
             </pre>
               </div>
@@ -254,7 +254,7 @@ export function FlowsPanel({ flows, onUpdateFlow, onCreateFlow }: FlowsPanelProp
 
   return (
       <div className="flex flex-col h-full bg-background">
-        <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-muted/5 flex-shrink-0">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-muted/5 shrink-0">
           <div className="flex items-center gap-2">
             <GitBranch className="size-4 text-primary" />
             <span className="text-sm font-semibold text-foreground">Flows</span>
@@ -276,7 +276,7 @@ export function FlowsPanel({ flows, onUpdateFlow, onCreateFlow }: FlowsPanelProp
           </div>
         </div>
 
-        <div className="flex items-center gap-1 px-4 py-2 border-b border-border bg-muted/10 flex-shrink-0 overflow-x-auto">
+        <div className="flex items-center gap-1 px-4 py-2 border-b border-border bg-muted/10 shrink-0 overflow-x-auto">
           {flows.map((f) => (
               <button
                   key={f.id} onClick={() => { setActiveFlowId(f.id); setSelectedNodeId(null) }}
@@ -341,7 +341,7 @@ export function FlowsPanel({ flows, onUpdateFlow, onCreateFlow }: FlowsPanelProp
         </div>
 
         {activeFlow && activeFlow.nodes.some((n) => n.status !== 'idle') && (
-            <div className="border-t border-border bg-background px-5 py-3 flex-shrink-0 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)] z-10">
+            <div className="border-t border-border bg-background px-5 py-3 shrink-0 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)] z-10">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[10px] text-muted-foreground uppercase tracking-wide font-semibold">Run log</span>
                 <button onClick={stopFlow} className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors bg-muted/40 hover:bg-muted px-2 py-1 rounded-md">

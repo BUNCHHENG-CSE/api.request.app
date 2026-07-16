@@ -3,9 +3,9 @@
 import { useRef } from 'react'
 import { Upload, Wand2, Code2, Package, Clipboard, RefreshCw, Info, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { KeyValueTable } from './ui/KeyValueTable'
-import { CodeEditor } from './ui/CodeEditor'
-import { SettingsRow } from './ui/Toggle'
+import { KeyValueTable } from '@/components/web/KeyValueTable'
+import { CodeEditor } from '@/components/web/CodeEditor'
+import { SettingsRow } from '@/components/web/Toggle'
 import type {
   KeyValueRow,
   BodyType,
@@ -14,7 +14,7 @@ import type {
   Scripts,
   RequestSettings,
   FormDataRow,
-} from './types'
+} from '@/types/api.types'
 
 type PanelTab = 'params' | 'headers' | 'auth' | 'body' | 'scripts' | 'settings'
 
@@ -417,7 +417,7 @@ function BodyTab({
               {rawFormat} <ChevronDown className="size-3" />
             </button>
             {rawFormatOpen && (
-              <div className="absolute top-full left-0 mt-1 z-40 bg-popover border border-border rounded-xl shadow-xl overflow-hidden min-w-[100px]">
+              <div className="absolute top-full left-0 mt-1 z-40 bg-popover border border-border rounded-xl shadow-xl overflow-hidden min-w-[6.25rem]">
                 {RAW_FORMATS.map((f) => (
                   <button
                     key={f}

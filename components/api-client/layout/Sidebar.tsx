@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import {
   Folder,
   FolderOpen,
@@ -14,8 +14,8 @@ import {
   Trash2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { MethodBadge } from './ui/MethodBadge'
-import type { Collection, HistoryEntry, SidebarSection } from './types'
+import { MethodBadge } from '../../web/MethodBadge'
+import type { Collection, HistoryEntry, SidebarSection } from '@/types/api.types'
 
 interface SidebarProps {
   collections: Collection[]

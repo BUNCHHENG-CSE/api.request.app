@@ -4,8 +4,8 @@ import type {
   Collection,
   HttpMethod,
   ApiResponse,
-} from './types'
-import { DEFAULT_REQUEST_SETTINGS } from './types'
+} from '@/types/api.types'
+import { DEFAULT_REQUEST_SETTINGS } from '@/types/api.types'
 
 export function generateId() {
   return Math.random().toString(36).slice(2, 11)

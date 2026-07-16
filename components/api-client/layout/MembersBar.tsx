@@ -3,7 +3,7 @@
 import {useEffect, useState} from 'react'
 import { Users, X, Circle } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { ProjectMember, Project } from './types'
+import type { ProjectMember, Project } from '@/types/api.types'
 
 interface MembersBarProps {
   self: ProjectMember

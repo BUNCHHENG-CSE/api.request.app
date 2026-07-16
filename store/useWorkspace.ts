@@ -1,10 +1,9 @@
 import { useState, useCallback } from 'react'
 import {
-  INITIAL_TABS,
   INITIAL_COLLECTIONS,
   INITIAL_ENVIRONMENTS,
   generateId,
-} from '../mock-data'
+} from '@/constants/mock-data'
 import type {
   RequestTab,
   Collection,
@@ -12,8 +11,8 @@ import type {
   ApiResponse,
   SidebarSection,
   Environment,
-} from '../types'
-import { DEFAULT_REQUEST_SETTINGS } from '../types'
+} from '@/types/api.types'
+import { DEFAULT_REQUEST_SETTINGS } from '@/types/api.types'
 
 type LogLevel = 'log' | 'error' | 'warn' | 'info'
 export interface LogEntry {
@@ -24,9 +23,27 @@ export interface LogEntry {
   details?: string
 }
 
+// Generate a stable ID for the initial default tab
+const DEFAULT_TAB_ID = generateId();
+
 export function useWorkspace() {
-  const [tabs, setTabs] = useState<RequestTab[]>(INITIAL_TABS)
-  const [activeTabId, setActiveTabId] = useState('tab-1')
+  // Start with a blank default tab to avoid mock data ID mismatches
+  const [tabs, setTabs] = useState<RequestTab[]>([{
+    id: DEFAULT_TAB_ID,
+    name: 'New Request',
+    method: 'GET',
+    url: '',
+    headers: [],
+    params: [],
+    body: '',
+    bodyType: 'none',
+    auth: { type: 'none' },
+    scripts: { preRequest: '', postResponse: '' },
+    settings: DEFAULT_REQUEST_SETTINGS,
+    activeTab: 'params',
+  }])
+  const [activeTabId, setActiveTabId] = useState(DEFAULT_TAB_ID)
+
   const [collections, setCollections] = useState<Collection[]>(INITIAL_COLLECTIONS)
   const [history, setHistory] = useState<HistoryEntry[]>([])
   const [responses, setResponses] = useState<Record<string, ApiResponse | null>>({})
@@ -43,22 +60,22 @@ export function useWorkspace() {
   const activeTab = tabs.find((t) => t.id === activeTabId)!
 
   const updateActiveTab = useCallback(
-    (updates: Partial<RequestTab>) => {
-      setTabs((prev) =>
-        prev.map((t) => (t.id === activeTabId ? { ...t, ...updates } : t)),
-      )
-    },
-    [activeTabId],
+      (updates: Partial<RequestTab>) => {
+        setTabs((prev) =>
+            prev.map((t) => (t.id === activeTabId ? { ...t, ...updates } : t)),
+        )
+      },
+      [activeTabId],
   )
 
   const addLog = useCallback(
-    (level: LogLevel, message: string, details?: string) => {
-      setLogs((prev) => [
-        ...prev,
-        { id: generateId(), level, message, timestamp: new Date(), details },
-      ])
-    },
-    [],
+      (level: LogLevel, message: string, details?: string) => {
+        setLogs((prev) => [
+          ...prev,
+          { id: generateId(), level, message, timestamp: new Date(), details },
+        ])
+      },
+      [],
   )
 
   /** Simulates an API request. Replace the timeout with a real fetch call. */
@@ -84,9 +101,9 @@ export function useWorkspace() {
           'x-request-id': generateId(),
         },
         body: JSON.stringify(
-          { message: 'Ready for real backend integration!', timestamp: new Date().toISOString() },
-          null,
-          2,
+            { message: 'Ready for real backend integration!', timestamp: new Date().toISOString() },
+            null,
+            2,
         ),
       }
 
@@ -134,49 +151,83 @@ export function useWorkspace() {
   }, [])
 
   const handleCloseTab = useCallback(
-    (id: string) => {
-      if (tabs.length === 1) return
-      const idx = tabs.findIndex((t) => t.id === id)
-      setTabs((prev) => prev.filter((t) => t.id !== id))
-      if (activeTabId === id) {
-        setActiveTabId(tabs[idx === 0 ? 1 : idx - 1].id)
-      }
-    },
-    [tabs, activeTabId],
+      (id: string) => {
+        // Fix: If it is the last tab, replace it with a fresh blank tab instead of crashing
+        if (tabs.length === 1) {
+          const newBlankTab: RequestTab = {
+            id: generateId(),
+            name: 'New Request',
+            method: 'GET',
+            url: '',
+            headers: [],
+            params: [],
+            body: '',
+            bodyType: 'none',
+            auth: { type: 'none' },
+            scripts: { preRequest: '', postResponse: '' },
+            settings: DEFAULT_REQUEST_SETTINGS,
+            activeTab: 'params',
+          }
+          setTabs([newBlankTab])
+          setActiveTabId(newBlankTab.id)
+          return
+        }
+
+        // Normal behavior for closing tabs when there are multiple open
+        const idx = tabs.findIndex((t) => t.id === id)
+        setTabs((prev) => prev.filter((t) => t.id !== id))
+        if (activeTabId === id) {
+          setActiveTabId(tabs[idx === 0 ? 1 : idx - 1].id)
+        }
+      },
+      [tabs, activeTabId],
   )
 
   const handleSelectRequest = useCallback(
-    (collectionId: string, requestId: string) => {
-      const req = collections
-        .find((c) => c.id === collectionId)
-        ?.requests.find((r) => r.id === requestId)
-      if (!req) return
-      const newTab: RequestTab = {
-        id: generateId(),
-        name: req.name,
-        method: req.method,
-        url: req.url,
-        headers: req.headers ?? [],
-        params: [],
-        body: req.body ?? '',
-        bodyType: 'none',
-        auth: { type: 'none' },
-        scripts: { preRequest: '', postResponse: '' },
-        settings: DEFAULT_REQUEST_SETTINGS,
-        activeTab: 'params',
-      }
-      setTabs((prev) => [...prev, newTab])
-      setActiveTabId(newTab.id)
-    },
-    [collections],
+      (collectionId: string, requestId: string) => {
+        // Fix: Check if a tab for this specific request ID already exists
+        const existingTab = tabs.find((t) => t.id === requestId)
+
+        if (existingTab) {
+          // If it exists, just switch to it instead of creating a new one
+          setActiveTabId(existingTab.id)
+          return
+        }
+
+        // If it doesn't exist, retrieve it from the collection and create the tab
+        const req = collections
+            .find((c) => c.id === collectionId)
+            ?.requests.find((r) => r.id === requestId)
+
+        if (!req) return
+
+        const newTab: RequestTab = {
+          id: requestId, // Use the actual requestId so we can track duplicates
+          name: req.name,
+          method: req.method,
+          url: req.url,
+          headers: req.headers ?? [],
+          params: [],
+          body: req.body ?? '',
+          bodyType: 'none',
+          auth: { type: 'none' },
+          scripts: { preRequest: '', postResponse: '' },
+          settings: DEFAULT_REQUEST_SETTINGS,
+          activeTab: 'params',
+        }
+
+        setTabs((prev) => [...prev, newTab])
+        setActiveTabId(newTab.id)
+      },
+      [collections, tabs],
   )
 
   const handleToggleCollection = useCallback(
-    (id: string) =>
-      setCollections((p) =>
-        p.map((c) => (c.id === id ? { ...c, expanded: !c.expanded } : c)),
-      ),
-    [],
+      (id: string) =>
+          setCollections((p) =>
+              p.map((c) => (c.id === id ? { ...c, expanded: !c.expanded } : c)),
+          ),
+      [],
   )
 
   return {

@@ -1,7 +1,7 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import type { HttpMethod } from '../types'
+import type { HttpMethod } from '@/types/api.types'
 
 /** Maps each HTTP method to its Tailwind color classes */
 export const METHOD_TEXT: Record<HttpMethod, string> = {

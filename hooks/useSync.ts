@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import type { Project, ProjectMember, Flow, Spec } from '../types'
+import type { Project, ProjectMember, Flow, Spec } from '@/types/api.types'
 
 function generateId() { return Math.random().toString(36).slice(2, 11) }
 

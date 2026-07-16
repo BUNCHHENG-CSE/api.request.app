@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { X, Plus, LogIn, Folder, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { Project, ProjectMember } from './types'
+import type { Project, ProjectMember } from '@/types/api.types'
 
 interface ProjectModalProps {
   projects: Project[]

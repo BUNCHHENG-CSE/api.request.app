@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { X, Plus, Trash2, Save, Eye, EyeOff, Lock } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { Environment, EnvironmentVariable } from './types'
+import type { Environment, EnvironmentVariable } from '@/types/api.types'
 
 interface EnvironmentEditorProps {
   environment: Environment

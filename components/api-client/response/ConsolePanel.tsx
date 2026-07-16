@@ -2,7 +2,7 @@
 
 import { ChevronUp, ChevronDown, Terminal, Trash2, Info, AlertTriangle, XCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { LogEntry } from './hooks/useWorkspace'
+import type { LogEntry } from '@/store/useWorkspace'
 
 interface ConsolePanelProps {
   logs: LogEntry[]

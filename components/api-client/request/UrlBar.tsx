@@ -3,8 +3,8 @@
 import { useState, useRef, useEffect } from 'react'
 import { Send, Save, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { METHOD_TEXT, METHOD_BG } from './ui/MethodBadge'
-import type { HttpMethod } from './types'
+import { METHOD_TEXT, METHOD_BG } from '@/components/web/MethodBadge'
+import type { HttpMethod } from '@/types/api.types'
 
 interface UrlBarProps {
   method: HttpMethod

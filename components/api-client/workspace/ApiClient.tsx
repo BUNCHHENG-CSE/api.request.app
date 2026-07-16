@@ -1,21 +1,21 @@
 'use client'
 
-import { TopNav } from './TopNav'
-import { Sidebar } from './Sidebar'
-import { TabBar } from './TabBar'
-import { UrlBar } from './UrlBar'
-import { RequestPanel } from './RequestPanel'
-import { ResponsePanel } from './ResponsePanel'
-import { ConsolePanel } from './ConsolePanel'
+import { TopNav } from '../layout/TopNav'
+import { Sidebar } from '../layout/Sidebar'
+import { TabBar } from '../layout/TabBar'
+import { UrlBar } from '../request/UrlBar'
+import { RequestPanel } from '../request/RequestPanel'
+import { ResponsePanel } from '../response/ResponsePanel'
+import { ConsolePanel } from '../response/ConsolePanel'
 import { FlowsPanel } from './FlowsPanel'
-import { SpecsPanel } from './SpecsPanel'
+import { SpecsPanel } from '../request/SpecsPanel'
 import { ProjectModal } from './ProjectModal'
 import { EnvironmentEditor } from './EnvironmentEditor'
 import { ProfileSettings } from './ProfileSettings'
-import { useSync } from './hooks/useSync'
-import { useWorkspace } from './hooks/useWorkspace'
+import { useSync } from '@/hooks/useSync'
+import { useWorkspace } from '@/store/useWorkspace'
 import { cn } from '@/lib/utils'
-import {BodyType} from "@/components/api-client/types";
+import {BodyType} from "@/types/api.types";
 
 export function ApiClient() {
   const workspace = useWorkspace()

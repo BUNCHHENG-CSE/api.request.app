@@ -2,8 +2,8 @@
 
 import { X, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { METHOD_TEXT } from './ui/MethodBadge'
-import type { RequestTab } from './types'
+import { METHOD_TEXT } from '@/components/web/MethodBadge'
+import type { RequestTab } from '@/types/api.types'
 
 interface TabBarProps {
   tabs: RequestTab[]

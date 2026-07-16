@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Layers, ChevronDown, ChevronRight, Download, Search, AlertTriangle, Copy, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { Spec, SpecEndpoint, HttpMethod } from './types'
+import type { Spec, SpecEndpoint, HttpMethod } from '@/types/api.types'
 
 const METHOD_COLORS: Record<HttpMethod, string> = {
   GET:     'text-blue-500',
@@ -51,26 +51,26 @@ function EndpointCard({ endpoint, baseUrl }: { endpoint: SpecEndpoint; baseUrl: 
             onClick={() => setExpanded(!expanded)}
             className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/20 transition-all text-left"
         >
-        <span className={cn('text-[10px] font-bold w-14 text-center py-0.5 rounded-md flex-shrink-0', METHOD_BADGE[endpoint.method])}>
+        <span className={cn('text-[10px] font-bold w-14 text-center py-0.5 rounded-md shrink-0', METHOD_BADGE[endpoint.method])}>
           {endpoint.method}
         </span>
           <code className="text-xs text-foreground/90 font-mono flex-1 truncate">{endpoint.path}</code>
           {endpoint.deprecated && (
-              <span className="flex items-center gap-1 text-[10px] text-amber-600 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20 flex-shrink-0">
+              <span className="flex items-center gap-1 text-[10px] text-amber-600 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20 shrink-0">
             <AlertTriangle className="size-2.5" />
             Deprecated
           </span>
           )}
-          <span className="text-xs text-muted-foreground truncate max-w-64 flex-shrink-0 hidden md:block">{endpoint.summary}</span>
-          {expanded ? <ChevronDown className="size-4 text-muted-foreground flex-shrink-0" /> : <ChevronRight className="size-4 text-muted-foreground flex-shrink-0" />}
+          <span className="text-xs text-muted-foreground truncate max-w-64 shrink-0 hidden md:block">{endpoint.summary}</span>
+          {expanded ? <ChevronDown className="size-4 text-muted-foreground shrink-0" /> : <ChevronRight className="size-4 text-muted-foreground shrink-0" />}
         </button>
 
         {expanded && (
             <div className="border-t border-border bg-muted/5">
               <div className="flex items-center gap-2 px-4 py-3 border-b border-border/50">
-                <span className="text-[10px] text-muted-foreground uppercase tracking-wide font-semibold w-20 flex-shrink-0">Full URL</span>
+                <span className="text-[10px] text-muted-foreground uppercase tracking-wide font-semibold w-20 shrink-0">Full URL</span>
                 <code className="text-xs text-primary font-mono flex-1">{fullUrl}</code>
-                <button onClick={handleCopy} className="text-muted-foreground hover:text-foreground transition-colors flex-shrink-0">
+                <button onClick={handleCopy} className="text-muted-foreground hover:text-foreground transition-colors shrink-0">
                   {copied ? <Check className="size-3.5 text-green-500" /> : <Copy className="size-3.5" />}
                 </button>
               </div>
@@ -110,7 +110,7 @@ function EndpointCard({ endpoint, baseUrl }: { endpoint: SpecEndpoint; baseUrl: 
                   <div className="space-y-2">
                     {endpoint.responses.map((resp) => (
                         <div key={resp.status} className="flex items-start gap-2">
-                          <span className={cn('text-xs font-bold font-mono flex-shrink-0 w-8', getStatusColor(resp.status))}>{resp.status}</span>
+                          <span className={cn('text-xs font-bold font-mono shrink-0 w-8', getStatusColor(resp.status))}>{resp.status}</span>
                           <div className="flex-1 min-w-0">
                             <p className="text-xs text-muted-foreground leading-snug">{resp.description}</p>
                             {resp.example && <code className="text-[10px] text-muted-foreground/60 font-mono block mt-1 truncate bg-muted/20 px-1.5 py-0.5 rounded border border-border/30">{resp.example}</code>}
@@ -138,8 +138,8 @@ export function SpecsPanel({ specs }: SpecsPanelProps) {
 
   const activeSpec = specs.find((s) => s.id === activeSpecId) ?? specs[0]
 
-  const toggleTag = (tag: string) => setExpandedTags((prev) => ({ ...prev, [tag]: prev[tag] === false ? true : false }))
-  const isTagExpanded = (tag: string) => expandedTags[tag] !== false
+  const toggleTag = (tag: string) => setExpandedTags((prev) => ({ ...prev, [tag]: !prev[tag] }))
+  const isTagExpanded = (tag: string) => expandedTags[tag]
 
   const filteredEndpoints = activeSpec?.endpoints.filter((ep) => {
     if (!search) return true
@@ -178,7 +178,7 @@ export function SpecsPanel({ specs }: SpecsPanelProps) {
 
   return (
       <div className="flex flex-col h-full bg-background">
-        <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-muted/5 flex-shrink-0">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-muted/5 shrink-0">
           <div className="flex items-center gap-2">
             <Layers className="size-4 text-primary" />
             <span className="text-sm font-semibold text-foreground">Specs</span>
@@ -189,7 +189,7 @@ export function SpecsPanel({ specs }: SpecsPanelProps) {
           </button>
         </div>
 
-        <div className="flex items-center gap-1 px-4 py-2 border-b border-border bg-muted/10 flex-shrink-0 overflow-x-auto">
+        <div className="flex items-center gap-1 px-4 py-2 border-b border-border bg-muted/10 shrink-0 overflow-x-auto">
           {specs.map((s) => (
               <button
                   key={s.id}
@@ -208,8 +208,8 @@ export function SpecsPanel({ specs }: SpecsPanelProps) {
 
         {activeSpec ? (
             <>
-              <div className="flex items-center gap-6 px-5 py-3 border-b border-border bg-background flex-shrink-0 overflow-x-auto shadow-sm z-10">
-                <div className="flex flex-col gap-0.5 flex-shrink-0">
+              <div className="flex items-center gap-6 px-5 py-3 border-b border-border bg-background shrink-0 overflow-x-auto shadow-sm z-10">
+                <div className="flex flex-col gap-0.5 shrink-0">
                   <span className="text-[10px] text-muted-foreground uppercase tracking-wide font-medium">Base URL</span>
                   <div className="flex items-center gap-1.5">
                     <code className="text-xs text-foreground/90 font-mono">{activeSpec.baseUrl}</code>
@@ -218,15 +218,15 @@ export function SpecsPanel({ specs }: SpecsPanelProps) {
                     </button>
                   </div>
                 </div>
-                <div className="flex flex-col gap-0.5 flex-shrink-0">
+                <div className="flex flex-col gap-0.5 shrink-0">
                   <span className="text-[10px] text-muted-foreground uppercase tracking-wide font-medium">Version</span>
                   <span className="text-xs text-foreground/90 font-mono">{activeSpec.version}</span>
                 </div>
-                <div className="flex flex-col gap-0.5 flex-shrink-0">
+                <div className="flex flex-col gap-0.5 shrink-0">
                   <span className="text-[10px] text-muted-foreground uppercase tracking-wide font-medium">Endpoints</span>
                   <span className="text-xs text-foreground/90 font-mono">{totalCount}</span>
                 </div>
-                <div className="flex items-center gap-2 flex-wrap flex-shrink-0">
+                <div className="flex items-center gap-2 flex-wrap shrink-0">
                   {(Object.entries(methodCounts) as [HttpMethod, number][]).map(([m, count]) => (
                       <div key={m} className="flex items-center gap-1">
                         <span className={cn('text-[10px] font-bold', METHOD_COLORS[m])}>{m}</span>
@@ -235,7 +235,7 @@ export function SpecsPanel({ specs }: SpecsPanelProps) {
                   ))}
                 </div>
 
-                <div className="relative ml-auto flex-shrink-0">
+                <div className="relative ml-auto shrink-0">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
                   <input
                       value={search}

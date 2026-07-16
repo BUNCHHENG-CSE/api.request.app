@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Copy, Check, Clock, Database, Zap, Wand2, Download } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { ApiResponse } from './types'
+import type { ApiResponse } from '@/types/api.types'
 
 type ResponseTab = 'body' | 'headers' | 'cookies' | 'timeline'
 
@@ -93,7 +93,7 @@ export function ResponsePanel({ response, isLoading }: ResponsePanelProps) {
   const isJson = response?.headers['content-type']?.includes('json')
 
   const copyBody = () => {
-    if (response?.body) navigator.clipboard.writeText(response.body)
+    if (response?.body) navigator.clipboard.writeText(response.body).then()
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }

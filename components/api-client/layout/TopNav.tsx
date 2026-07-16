@@ -5,7 +5,7 @@ import { ChevronDown, Zap, Settings2, Settings, LogOut, Search, UserCircle } fro
 import { cn } from '@/lib/utils'
 import { ThemeToggle } from '@/components/web/theme-toggle'
 import { MembersBar } from './MembersBar'
-import type { Project, ProjectMember } from './types'
+import type { Project, ProjectMember } from '@/types/api.types'
 
 interface TopNavProps {
   environment: string
@@ -124,7 +124,7 @@ export function TopNav({
               <span
                 className={cn('size-1.5 rounded-full shrink-0', ENV_COLORS[environment] ?? 'bg-muted-foreground')}
               />
-              <span className="hidden sm:inline max-w-[96px] truncate">{environment}</span>
+              <span className="hidden sm:inline max-w-24 truncate">{environment}</span>
               <ChevronDown className={cn('size-3 opacity-50 transition-transform', envOpen && 'rotate-180')} />
             </button>
             {environment !== 'No Environment' && (
@@ -139,7 +139,7 @@ export function TopNav({
           </div>
 
           {envOpen && (
-            <div className="absolute top-full right-0 mt-1.5 z-50 bg-popover border border-border rounded-xl shadow-2xl overflow-hidden min-w-[176px]">
+            <div className="absolute top-full right-0 mt-1.5 z-50 bg-popover border border-border rounded-xl shadow-2xl overflow-hidden min-w-44">
               <div className="px-3 py-2 border-b border-border/50">
                 <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                   Environments

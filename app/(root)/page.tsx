@@ -1,4 +1,4 @@
-import {ApiClient} from "@/components/api-client/ApiClient";
+import {ApiClient} from "@/components/api-client/workspace/ApiClient";
 
 
 const Page = () => {
