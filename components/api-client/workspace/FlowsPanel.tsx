@@ -5,7 +5,7 @@ import { Play, Plus, GitBranch, Trash2, ChevronRight, CheckCircle2, XCircle, Loa
 import { cn } from '@/lib/utils'
 import { METHOD_COLORS, METHOD_BG } from '@/components/web/MethodBadge'
 import { useSync } from '@/hooks/useSync'
-import type { Flow, FlowNode, HttpMethod } from '@/types/api.types'
+import type { FlowNode, HttpMethod } from '@/types/api.types'
 
 function Arrow({ fromX, fromY, toX, toY, label }: { fromX: number; fromY: number; toX: number; toY: number; label?: string }) {
   const NODE_W = 160
@@ -198,24 +198,11 @@ export function FlowsPanel() {
     if (!activeFlow || running) return
     setRunning(true)
     setSelectedNodeId(null)
-
-    const resetFlow: Flow = { ...activeFlow, nodes: activeFlow.nodes.map((n) => ({ ...n, status: 'idle', response: undefined })) }
-    onUpdateFlow(resetFlow)
-
-    const requestNodes = resetFlow.nodes.filter((n) => n.type === 'request')
-    for (const node of requestNodes) {
-      onUpdateFlow({ ...resetFlow, nodes: resetFlow.nodes.map((n) => n.id === node.id ? { ...n, status: 'running' } : n) })
-      await new Promise((r) => setTimeout(r, 600 + Math.random() * 400))
-      const time = Math.floor(Math.random() * 200) + 60
-      const ok = Math.random() > 0.15
-      const status = ok ? (node.method === 'POST' ? 201 : 200) : 500
-      const response = { status, time, body: ok ? '{"success":true}' : '{"error":"Server Error"}' }
-
-      resetFlow.nodes = resetFlow.nodes.map((n) => n.id === node.id ? { ...n, status: ok ? 'success' : 'error', response } : n)
-      onUpdateFlow({ ...resetFlow })
-    }
+    onUpdateFlow({ ...activeFlow, nodes: activeFlow.nodes.map((node) => node.type === 'request' ? { ...node, status: 'running', response: undefined } : node) })
+    const error = await sync.runFlow(activeFlow.id)
+    if (error) console.error(error)
     setRunning(false)
-  }, [activeFlow, running, onUpdateFlow])
+  }, [activeFlow, running, onUpdateFlow, sync])
 
   const stopFlow = useCallback(() => {
     if (!activeFlow) return
@@ -223,12 +210,21 @@ export function FlowsPanel() {
     onUpdateFlow({ ...activeFlow, nodes: activeFlow.nodes.map((n) => ({ ...n, status: 'idle', response: undefined })) })
   }, [activeFlow, onUpdateFlow])
 
-  const handleCreateFlow = () => {
+  const handleCreateFlow = async () => {
     if (!newFlowName.trim()) return
-    const flow = onCreateFlow(newFlowName.trim(), sync.activeProjectId ?? undefined)
+    const flow = await onCreateFlow(newFlowName.trim(), sync.activeProjectId ?? undefined)
+    if (!flow) return
     setActiveFlowId(flow.id)
     setNewFlowName('')
     setShowNewFlow(false)
+  }
+  const handleDeleteFlow = async () => {
+    if (!activeFlow || !window.confirm(`Delete flow ${activeFlow.name} and all of its requests?`)) return
+    const error = await sync.deleteFlow(activeFlow.id)
+    if (error) { console.error(error); return }
+    const next = flows.find((flow) => flow.id !== activeFlow.id)
+    setActiveFlowId(next?.id ?? '')
+    setSelectedNodeId(null)
   }
 
   const CANVAS_H = 400
@@ -247,13 +243,14 @@ export function FlowsPanel() {
                   <StopCircle className="size-3.5" /> Stop
                 </button>
             ) : (
-                <button onClick={runFlow} disabled={!activeFlow} className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm shadow-primary/20 transition-all text-xs font-semibold disabled:opacity-40">
-                  <Play className="size-3.5 fill-current" /> Run Flow
+                <button onClick={runFlow} className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm shadow-primary/20 transition-all text-xs font-semibold disabled:opacity-40">
+                  <Play className="size-3.5 fill-current" /> Run flow
                 </button>
             )}
             <button onClick={() => setShowNewFlow(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted/30 border border-border text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-all text-xs">
               <Plus className="size-3.5" /> New Flow
             </button>
+            {activeFlow && <button onClick={() => void handleDeleteFlow()} title="Delete active flow" className="rounded-lg border border-rose-500/20 p-1.5 text-rose-500 hover:bg-rose-500/10"><Trash2 className="size-3.5" /></button>}
           </div>
         </div>
 

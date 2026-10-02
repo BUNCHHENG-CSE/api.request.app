@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils'
 import { useWorkspaceStore } from '@/store/useWorkspaceStore'
 import { generateId } from '@/constants/mock-data'
 import type { Environment, EnvironmentVariable } from '@/types/api.types'
+import { useSync } from '@/hooks/useSync'
 
 const ENV_DOT_COLORS: Record<string, string> = {
   '#3b82f6': 'bg-blue-500',
@@ -15,11 +16,14 @@ const ENV_DOT_COLORS: Record<string, string> = {
 
 export function EnvironmentEditor() {
   const editingEnvironment = useWorkspaceStore((state) => state.editingEnvironment)
-  const environments = useWorkspaceStore((state) => state.environments)
   const setEditingEnvironment = useWorkspaceStore((state) => state.setEditingEnvironment)
+  const sync = useSync()
 
   const [env, setEnv] = useState<Environment | null>(null)
   const [revealedIds, setRevealedIds] = useState<Set<string>>(new Set())
+  const [saving, setSaving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -61,11 +65,18 @@ export function EnvironmentEditor() {
         variables: prev.variables.filter((v) => v.id !== id),
       }) : prev)
 
-  const handleSave = () => {
-    useWorkspaceStore.setState({
-      environments: environments.map((e) => e.id === env.id ? env : e),
-      editingEnvironment: null
-    })
+  const handleSave = async () => {
+    setSaving(true); setError(null)
+    const message = await sync.updateEnvironment(env)
+    setSaving(false)
+    if (message) setError(message)
+  }
+  const handleDelete = async () => {
+    if (!window.confirm(`Delete environment ${env.name}?`)) return
+    setDeleting(true); setError(null)
+    const message = await sync.deleteEnvironment(env.id)
+    setDeleting(false)
+    if (message) setError(message)
   }
 
   const dotColor = ENV_DOT_COLORS[env.color] ?? 'bg-primary'
@@ -194,6 +205,9 @@ export function EnvironmentEditor() {
             {env.variables.filter((v) => v.enabled).length} of {env.variables.length} variables active
           </span>
             <div className="flex items-center gap-2">
+              <button onClick={() => void handleDelete()} disabled={deleting || saving} className="mr-auto flex items-center gap-2 rounded-xl border border-rose-500/20 px-3 py-2 text-xs text-rose-500 hover:bg-rose-500/10 disabled:opacity-50">
+                <Trash2 className="size-3.5" /> {deleting ? 'Deleting…' : 'Delete'}
+              </button>
               <button
                   onClick={() => setEditingEnvironment(null)}
                   className="px-4 py-2 rounded-xl text-xs font-medium text-muted-foreground hover:bg-surface hover:text-foreground transition-colors border border-border"
@@ -201,14 +215,16 @@ export function EnvironmentEditor() {
                 Cancel
               </button>
               <button
-                  onClick={handleSave}
+                  onClick={() => void handleSave()}
+                  disabled={saving}
                   className="flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-md shadow-primary/20"
               >
                 <Save className="size-3.5" />
-                Save Changes
+                {saving ? 'Saving…' : 'Save environment'}
               </button>
             </div>
           </div>
+          {error && <p className="px-5 pb-3 text-[10px] text-rose-500">{error}</p>}
         </div>
       </div>
   )

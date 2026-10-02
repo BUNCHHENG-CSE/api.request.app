@@ -14,11 +14,22 @@ import {EnvironmentEditor} from '@/components/api-client/workspace/EnvironmentEd
 import {ProfileSettings} from '@/components/api-client/workspace/ProfileSettings'
 import {useWorkspaceStore} from '@/store/useWorkspaceStore'
 import {cn} from '@/lib/utils'
+import {SyncProvider, useSync} from '@/hooks/useSync'
+import {AuthScreen} from '@/components/api-client/auth/AuthScreen'
+import {Loader2} from 'lucide-react'
 
 export function ApiClient() {
+    return <SyncProvider><ApiClientContent/></SyncProvider>
+}
+
+function ApiClientContent() {
+    const sync = useSync()
     // We only need the sidebarSection to determine the layout structure
     const sidebarSection = useWorkspaceStore((state) => state.sidebarSection)
     const isFullscreenView = sidebarSection === 'flows' || sidebarSection === 'specs'
+
+    if (sync.authLoading) return <div className="grid h-screen place-items-center bg-background"><Loader2 className="size-6 animate-spin text-primary"/></div>
+    if (!sync.user) return <AuthScreen/>
 
     return (
         <div

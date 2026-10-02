@@ -24,8 +24,6 @@ export function ConsolePanel() {
   const setConsoleMinimized = useWorkspaceStore((state) => state.setConsoleMinimized)
 
   const errorCount = logs.filter((l) => l.level === 'error').length
-  const warnCount = logs.filter((l) => l.level === 'warn').length
-
   const handleClear = () => {
     useWorkspaceStore.setState({ logs: [] })
   }
@@ -94,6 +92,11 @@ export function ConsolePanel() {
                     {log.message}
                   </span>
                         </div>
+                        {log.details && (
+                            <div className="ml-[88px] mt-1 whitespace-pre-wrap break-words rounded-md border border-border/60 bg-background/70 px-2.5 py-2 text-[10px] leading-relaxed text-muted-foreground">
+                              {log.details}
+                            </div>
+                        )}
                       </div>
                   ))
               )}

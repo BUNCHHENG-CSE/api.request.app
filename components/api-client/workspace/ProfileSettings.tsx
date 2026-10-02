@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { X, Save, Camera, Bell, Shield, Palette, User, Moon, Sun, Monitor } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useWorkspaceStore } from '@/store/useWorkspaceStore'
+import { useSync } from '@/hooks/useSync'
 
 type SettingsSection = 'profile' | 'appearance' | 'notifications' | 'security'
 
@@ -22,14 +23,20 @@ const NAV: { id: SettingsSection; label: string; Icon: React.ElementType }[] = [
 export function ProfileSettings() {
   const isOpen = useWorkspaceStore((state) => state.profileSettingsOpen)
   const setProfileSettingsOpen = useWorkspaceStore((state) => state.setProfileSettingsOpen)
+  const sync = useSync()
 
   const [section, setSection] = useState<SettingsSection>('profile')
 
-  const [name, setName] = useState('Developer')
-  const [email, setEmail] = useState('developer@flowapi.dev')
+  const [name, setName] = useState(sync.user?.username ?? '')
+  const [email] = useState(sync.user?.email ?? '')
   const [bio, setBio] = useState('')
   const [avatarColor, setAvatarColor] = useState('#3b82f6')
   const [saved, setSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
 
   const [theme, setTheme] = useState<'dark' | 'light' | 'system'>('dark')
   const [fontSize, setFontSize] = useState<'sm' | 'md' | 'lg'>('md')
@@ -44,7 +51,13 @@ export function ProfileSettings() {
 
   const handleClose = () => setProfileSettingsOpen(false)
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    setSaving(true); setSaveError(null)
+    const error = section === 'security'
+      ? await sync.changePassword(currentPassword, newPassword, confirmPassword)
+      : section === 'profile' ? await sync.updateProfile(name.trim()) : null
+    setSaving(false)
+    if (error) { setSaveError(error); return }
     setSaved(true)
     setTimeout(() => {
       setSaved(false)
@@ -138,7 +151,7 @@ export function ProfileSettings() {
                       <div className="flex flex-col gap-1.5">
                         <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Email Address</label>
                         <input
-                            type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                            type="email" value={email} readOnly
                             placeholder="you@example.com"
                             className="bg-surface border border-border rounded-xl px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/40 transition-all"
                         />
@@ -218,15 +231,15 @@ export function ProfileSettings() {
                   <div className="space-y-4">
                     <div className="flex flex-col gap-1.5">
                       <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Current Password</label>
-                      <input type="password" placeholder="••••••••" className="bg-surface border border-border rounded-xl px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all" />
+                      <input type="password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} placeholder="Current password" className="bg-surface border border-border rounded-xl px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all" />
                     </div>
                     <div className="flex flex-col gap-1.5">
                       <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">New Password</label>
-                      <input type="password" placeholder="••••••••" className="bg-surface border border-border rounded-xl px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all" />
+                      <input type="password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} placeholder="New password" className="bg-surface border border-border rounded-xl px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all" />
                     </div>
                     <div className="flex flex-col gap-1.5">
                       <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Confirm New Password</label>
-                      <input type="password" placeholder="••••••••" className="bg-surface border border-border rounded-xl px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all" />
+                      <input type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} placeholder="Confirm new password" className="bg-surface border border-border rounded-xl px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all" />
                     </div>
                     <div className="p-3 rounded-xl bg-rose-500/5 border border-rose-500/15 mt-4">
                       <p className="text-[11px] text-muted-foreground">Password must be at least 8 characters and include a number and special character.</p>
@@ -236,12 +249,13 @@ export function ProfileSettings() {
             </div>
 
             <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-border shrink-0 bg-card/50">
+              {saveError && <span className="mr-auto text-[10px] text-rose-500">{saveError}</span>}
               <button onClick={handleClose} className="px-4 py-2 rounded-xl text-xs font-medium text-muted-foreground hover:bg-surface hover:text-foreground transition-colors border border-border">
                 Cancel
               </button>
-              <button onClick={handleSave} className={cn('flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-semibold transition-all shadow-md', saved ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-primary/20')}>
+              <button onClick={() => void handleSave()} disabled={saving || (section === 'profile' && !name.trim())} className={cn('flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-semibold transition-all shadow-md disabled:opacity-50', saved ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-primary/20')}>
                 <Save className="size-3.5" />
-                {saved ? 'Saved!' : 'Save Changes'}
+                {saving ? 'Saving…' : saved ? 'Saved!' : 'Save Changes'}
               </button>
             </div>
           </div>

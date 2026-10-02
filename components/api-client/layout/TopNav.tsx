@@ -1,13 +1,13 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { ChevronDown, Zap, Settings2, LogOut, Search, UserCircle } from 'lucide-react'
+import { ChevronDown, Zap, Settings2, LogOut, Search, UserCircle, Check, X, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ThemeToggle } from '@/components/web/theme-toggle'
 import { useWorkspaceStore } from '@/store/useWorkspaceStore'
 import { useSync } from '@/hooks/useSync'
+import type { BackendSearchResult } from '@/types/backend.types'
 
-const ENVIRONMENTS = ['No Environment', 'Development', 'Staging', 'Production']
 const ENV_COLORS: Record<string, string> = {
   Development: 'bg-blue-500',
   Staging: 'bg-amber-500',
@@ -19,7 +19,13 @@ export function TopNav() {
   const [envOpen, setEnvOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [searchFocused, setSearchFocused] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState<BackendSearchResult[]>([])
   const [mounted, setMounted] = useState(false)
+  const [creatingEnvironment, setCreatingEnvironment] = useState(false)
+  const [newEnvironmentName, setNewEnvironmentName] = useState('')
+  const [savingEnvironment, setSavingEnvironment] = useState(false)
+  const [environmentError, setEnvironmentError] = useState<string | null>(null)
 
   const envRef = useRef<HTMLDivElement>(null)
   const userRef = useRef<HTMLDivElement>(null)
@@ -31,6 +37,7 @@ export function TopNav() {
   const setEditingEnvironment = useWorkspaceStore((state) => state.setEditingEnvironment)
   const setProjectModalOpen = useWorkspaceStore((state) => state.setProjectModalOpen)
   const setProfileSettingsOpen = useWorkspaceStore((state) => state.setProfileSettingsOpen)
+  const handleSelectRequest = useWorkspaceStore((state) => state.handleSelectRequest)
 
   // Sync State (For user avatar and current workspace name)
   const sync = useSync()
@@ -51,6 +58,32 @@ export function TopNav() {
   const selfColor = sync.self?.color || '#3b82f6'
   const initials = selfName.substring(0, 2).toUpperCase()
 
+  const createEnvironment = async () => {
+    const name = newEnvironmentName.trim()
+    if (!name || savingEnvironment) return
+    setSavingEnvironment(true)
+    setEnvironmentError(null)
+    const error = await sync.createEnvironment(name)
+    setSavingEnvironment(false)
+    if (error) { setEnvironmentError(error); return }
+    setNewEnvironmentName('')
+    setCreatingEnvironment(false)
+    setEnvOpen(false)
+  }
+
+  const search = async (value: string) => {
+    setSearchQuery(value)
+    setSearchResults(await sync.search(value))
+  }
+
+  const openSearchResult = (result: BackendSearchResult) => {
+    if (result.type === 'request') {
+      const collection = useWorkspaceStore.getState().collections.find((item) => item.requests.some((request) => request.id === result.id))
+      if (collection) handleSelectRequest(collection.id, result.id)
+    } else if (result.type === 'flow') useWorkspaceStore.getState().setSidebarSection('flows')
+    setSearchFocused(false); setSearchQuery(''); setSearchResults([])
+  }
+
   return (
       <header className="flex items-center gap-3 px-4 h-12 bg-card border-b border-border shrink-0">
         <div className="flex items-center gap-3 shrink-0">
@@ -59,6 +92,7 @@ export function TopNav() {
               <Zap className="size-3.5 text-primary-foreground" />
             </div>
             <span className="text-sm font-bold tracking-tight text-foreground">FlowAPI</span>
+            <span title={sync.apiStatus === 'online' ? 'Backend connected' : sync.apiStatus === 'offline' ? 'Backend unavailable' : 'Checking backend'} className={cn('size-1.5 rounded-full', sync.apiStatus === 'online' ? 'bg-emerald-500' : sync.apiStatus === 'offline' ? 'bg-rose-500' : 'bg-amber-500 animate-pulse')} />
           </div>
 
           <div className="h-4 w-px bg-border" />
@@ -77,10 +111,23 @@ export function TopNav() {
             <Search className="size-3.5 text-muted-foreground shrink-0" />
             <input
                 onFocus={() => setSearchFocused(true)}
-                onBlur={() => setSearchFocused(false)}
+                onBlur={() => window.setTimeout(() => setSearchFocused(false), 150)}
+                value={searchQuery}
+                onChange={(event) => void search(event.target.value)}
                 placeholder="Search requests, collections..."
                 className="flex-1 bg-transparent text-xs placeholder:text-muted-foreground/50 focus:outline-none min-w-0"
             />
+            {searchFocused && searchQuery && (
+                <div className="absolute left-0 right-0 top-full z-50 mt-1.5 max-h-72 overflow-y-auto rounded-xl border border-border bg-popover p-1.5 shadow-2xl">
+                  {searchResults.length ? searchResults.map((result) => (
+                      <button key={`${result.type}-${result.id}`} onMouseDown={() => openSearchResult(result)} className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left hover:bg-accent">
+                        <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase text-primary">{result.type}</span>
+                        <span className="min-w-0 flex-1 truncate text-xs">{result.name}</span>
+                        {result.method && <span className="text-[10px] text-muted-foreground">{result.method}</span>}
+                      </button>
+                  )) : <p className="px-3 py-4 text-center text-xs text-muted-foreground">No matches</p>}
+                </div>
+            )}
           </div>
         </div>
 
@@ -110,7 +157,7 @@ export function TopNav() {
                   <div className="px-3 py-2 border-b border-border/50">
                     <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Environments</p>
                   </div>
-                  {ENVIRONMENTS.map((env) => (
+                  {['No Environment', ...environments.map((item) => item.name)].map((env) => (
                       <button
                           key={env}
                           onClick={() => { setEnvironment(env); setEnvOpen(false) }}
@@ -120,6 +167,18 @@ export function TopNav() {
                         <span className="flex-1 text-left">{env}</span>
                       </button>
                   ))}
+                  {creatingEnvironment ? (
+                      <div className="border-t border-border p-2">
+                        <div className="flex gap-1">
+                          <input autoFocus value={newEnvironmentName} onChange={(event) => setNewEnvironmentName(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') void createEnvironment(); if (event.key === 'Escape') setCreatingEnvironment(false) }} placeholder="Environment name" className="min-w-0 flex-1 rounded-md border border-border bg-background px-2 py-1.5 text-xs outline-none focus:border-primary/50" />
+                          <button onClick={() => void createEnvironment()} disabled={!newEnvironmentName.trim() || savingEnvironment} className="rounded-md bg-primary p-1.5 text-primary-foreground disabled:opacity-40">{savingEnvironment ? <Loader2 className="size-3 animate-spin" /> : <Check className="size-3" />}</button>
+                          <button onClick={() => { setCreatingEnvironment(false); setEnvironmentError(null) }} className="rounded-md border border-border p-1.5 text-muted-foreground"><X className="size-3" /></button>
+                        </div>
+                        {environmentError && <p className="mt-1.5 text-[10px] text-rose-500">{environmentError}</p>}
+                      </div>
+                  ) : (
+                      <button onClick={() => { setCreatingEnvironment(true); setEnvironmentError(null) }} className="w-full border-t border-border px-3 py-2 text-left text-xs text-primary hover:bg-accent">+ New environment</button>
+                  )}
                 </div>
             )}
           </div>
@@ -144,7 +203,7 @@ export function TopNav() {
                     >
                       <UserCircle className="size-3.5 text-muted-foreground" /> Profile Settings
                     </button>
-                    <button className="w-full flex items-center gap-2.5 px-4 py-2 text-xs text-rose-400 hover:bg-rose-500/10 transition-colors">
+                    <button onClick={() => void sync.logout()} className="w-full flex items-center gap-2.5 px-4 py-2 text-xs text-rose-400 hover:bg-rose-500/10 transition-colors">
                       <LogOut className="size-3.5" /> Sign Out
                     </button>
                   </div>
